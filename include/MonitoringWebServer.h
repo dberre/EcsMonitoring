@@ -11,7 +11,6 @@ class MonitoringWebServer {
 
     private:
     const char *ssid = "EcsMonitoring";
-    const char *password = "motdepasse1234";
 
     AsyncWebServer *server;
 };
