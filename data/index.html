@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <title>Serveur ESP32</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
+        <link rel="stylesheet" type="text/css" href="w3.css">
+        <script type="text/javascript" src="script.js"></script>
+    </head>
+
+    <body class="w3-animate-opacity">
+        <div class="w3-card w3-blue w3-padding-small w3-center">
+            <h1>ECS monitoring</h1>
+        </div>
+
+        <div class="w3-padding-small w3-center">
+            <button onClick="immediateMonitoringButton()" class="w3-button w3-green w3-xlarge w3-ripple w3-wide" style="width:40%;">Valeurs instantanées</button>
+        </div>
+        <div class="w3-padding-small w3-center">
+            <button onClick="historizedMonitoringButton()" class="w3-button w3-green w3-xlarge w3-ripple w3-wide" style="width:40%;">Historique</button>
+        </div>
+        <div class="w3-padding-small w3-center">
+            <button onClick="gotoSleepButton()" class="w3-button w3-red w3-xlarge w3-ripple w3-wide" style="width:40%;">Mettre en veille</button>
+        </div>
+        <div class="w3-padding-small w3-center">
+            <button onClick="setTimeButton()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Mettre à l'heure</button>
+        </div>
+        <div class="w3-padding-small w3-center">
+            <form id="form">
+                <input type="text"/>
+                <button type="submit" form="form">Generate Report</button>
+              </form>
+        </div>
+
+    </body>
+
+</html>
