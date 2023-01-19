@@ -1,7 +1,7 @@
 #include <Arduino.h>
+#include <SPIFFS.h>
 
 #include "Persistence.h"
-#include <SPIFFS.h>
 
 // TODO ugly why using the ATTR with a class don't make is persistent ?
 RTC_DATA_ATTR int dataCursor = 0;

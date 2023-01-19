@@ -6,13 +6,11 @@
 #include "MonitoringWebServer.h"
 #include "VoltageSensor.h"
 #include "TemperatureSensors.h"
-#include "TimeBase.h"
 #include "Persistence.h"
 #include "DataPoint.h"
 
 RTC_DATA_ATTR Persistence persistence;
 
-TimeBase timeBase;
 MonitoringWebServer monitoringWebServer;
 
 void setupUtils() {
@@ -52,9 +50,6 @@ void gotoSleep() {
   monitoringWebServer.stop();
   // TODO stop the timeout user session
 
-  // time_t now = time(NULL);
-  // uint64_t timeToSleep = difftime(nextTick, now);
-  // timeToSleep = (timeToSleep > 0) ? timeToSleep : 1;
   time_t timeToSleep = 30; // TODO restore a reliable 60s
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);

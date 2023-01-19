@@ -100,7 +100,7 @@ MonitoringWebServer::MonitoringWebServer() {
             strftime(date_string, 20, "%d/%m/%y %T", localtime(&now));
             Serial.printf("received:%d set:%s\n", param.toInt(), date_string);
 
-            request->send(204);
+            request->send(200, "application/json", String("{\"timeEpoch\":") + String(now) + String("}"));
         } else {
             request->send(500);
         }
