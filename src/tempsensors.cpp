@@ -1,15 +1,14 @@
 #include <OneWire.h>
 #include <DS18B20.h>
 
-// numbers chosen to match pin numbers..
-#define ONE_WIRE_BUS2               32
-#define ONE_WIRE_BUS3               25
+#define COLD_SENSOR_PIN 32
+#define HOT_SENSOR_PIN  25
 
-OneWire oneWire2(ONE_WIRE_BUS2);
-OneWire oneWire3(ONE_WIRE_BUS3);
+OneWire coldSensorPin(COLD_SENSOR_PIN);
+OneWire hotSensorPin(HOT_SENSOR_PIN);
 
-DS18B20 coldSensor(&oneWire2);
-DS18B20 hotSensor(&oneWire3);
+DS18B20 coldSensor(&coldSensorPin);
+DS18B20 hotSensor(&hotSensorPin);
 
 static bool setupTemperatureSensor(DS18B20& sensor) {
     if (!sensor.begin()) { return false; }
@@ -37,18 +36,15 @@ bool setupTemperatureSensors(void)
     return true;
 }
 
-void requestTemperatures() {
-    coldSensor.requestTemperatures();
-    hotSensor.requestTemperatures();
-}
-
 float getColdTemperature() {
+    coldSensor.requestTemperatures();
     float t = getTemperature(coldSensor);
     Serial.printf("getColdTemperature %f\n", t);
     return t;
 }
 
 float getHotTemperature() {
+    hotSensor.requestTemperatures();
     float t = getTemperature(hotSensor);
     Serial.printf("getHotTemperature %f\n", t);
     return t;

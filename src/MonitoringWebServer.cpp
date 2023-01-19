@@ -66,24 +66,7 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.printf("server: /setTime\n");
-                // int params = request->params();
-                // Serial.printf("%d params sent in\n", params);
-                // for (int i = 0; i < params; i++)
-                // {
-                //     AsyncWebParameter *p = request->getParam(i);
-                //     if (p->isFile())
-                //     {
-                //         Serial.printf("_FILE[%s]: %s\n, size: %u", p->name().c_str(), p->value().c_str(), p->size());
-                //     }
-                //     else if (p->isPost())
-                //     {
-                //         Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-                //     }
-                //     else
-                //     {
-                //         Serial.printf("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-                //     }
-                // }
+
         if (request->hasParam("timeEpoch")) {
             String param = request->getParam("timeEpoch")->value();
             timeval tmval;

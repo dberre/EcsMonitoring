@@ -33,7 +33,6 @@ void setupUtils() {
 }
 
 DataPoint makeMeasurement() {
-  requestTemperatures();
   DataPoint newPoint;
   newPoint.coldTemperature = (int16_t)(getColdTemperature() * 10.0f);
   newPoint.hotTemperature = (int16_t)(getHotTemperature() * 10.0f);
