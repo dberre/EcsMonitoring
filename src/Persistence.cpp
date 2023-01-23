@@ -7,6 +7,8 @@
 RTC_DATA_ATTR int dataCursor = 0;
 RTC_DATA_ATTR  DataPoint dataPoints[PERSISTANCE_BUFFER_SIZE];
 
+const String dataFilename = "/EcsMonitoring.dat";
+
 Persistence::Persistence() {
 }
 
@@ -26,13 +28,36 @@ DataPoint Persistence::getLastDataPoint() {
 
 void Persistence::saveToFile() {
     Serial.println("Persistance save");
-    File file = SPIFFS.open("/EcsMonitoring.tsv", "a", true);
-    char tmp[80];
+    File file = SPIFFS.open(dataFilename, "a", true);
     for (int i = 0; i < dataCursor; i++) {
         DataPoint pt = dataPoints[i];
-        sprintf(tmp, "%d\t%d\t%d\t%d\n", pt.timestamp, pt.coldTemperature, pt.hotTemperature, (pt.heating) ? 1 : 0);
-        file.write((const uint8_t *)tmp, strlen(tmp));
-        Serial.printf("SaveToFile: %s", tmp);
+        file.write((const uint8_t *)(&pt), sizeof(DataPoint));
     }
     file.close();
+}
+
+int Persistence::getDataPoints(DataPoint *dataPoints, int count, int offset = 0) {
+    File file = SPIFFS.open(dataFilename);
+    
+    int count_ = count;
+    if ((count_ + offset) * sizeof(DataPoint) > file.available()) {
+        // clamp count to remain within bounds
+        count_ = file.available() / sizeof(DataPoint) - offset;
+        if (count_ < 1) {
+            // no data points can be returned with this count and offsete
+            return 0;
+        }
+    }
+
+    DataPoint *dataPtr = dataPoints;
+    uint32_t position = file.available() - (offset + 1) * sizeof(DataPoint);
+    for (int i = 0; i < count_; i++) {
+        file.seek(position);
+        file.read((uint8_t *)dataPtr, sizeof(DataPoint));
+        position -= sizeof(DataPoint);
+        dataPtr++;
+    }
+    file.close();
+
+    return count_;
 }

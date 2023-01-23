@@ -34,6 +34,10 @@ function setTimeButton() {
     xhttp.send();
 }
 
+function getHistoryPage() {
+    
+}
+
 function downloadFile(urlToSend) {
     var req = new XMLHttpRequest();
     req.open("GET", urlToSend, true);

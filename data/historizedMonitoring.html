@@ -2,6 +2,19 @@
 <html lang="fr">
     <head>
         <title>ECS monitoring</title>
+        <style>
+            * {
+                font-family: Arial, Helvetica, sans-serif;
+                box-sizing: border-box;
+            }
+            table {
+                border-collapse: collapse;
+            }
+            table td {
+                padding: 10px;
+                border: 1px solid #000;
+            }
+        </style>
         <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
         <link rel="stylesheet" type="text/css" href="w3.css">
         <script type="text/javascript" src="script.js"></script>
@@ -12,6 +25,46 @@
             <h1>Historique</h1>
         </div>
 
+        <div>
+            <table id="table"></table>
+
+            <script>
+                window.onload = () => {
+                    var table = document.getElementById("table");
+                    table.innerHTML = ""
+
+                    fetch("http://192.168.4.22/history&count=4").then(res =>  {
+                        res.text()
+                    }).then(csv => {
+                        console.log(csv)
+                    })
+                    // var xhttp = new XMLHttpRequest();
+            
+                    // xhttp.onreadystatechange = function() {
+                    //     console.log("state:" + this.readyState);
+                    //     console.log("type:" + this.responseType);
+                    //     console.log(this.response);
+                    //     if (this.readyState == 4 && this.status == 200) {
+                    //         let rows = this.responseText.split("\r\n");
+                    //         for (let row of rows) {
+                    //             let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
+                    //             console.log(cols)
+                    //             if (cols != null) {
+                    //                 let tr = table.insertRow();
+                    //                 for (let col of cols) {
+                    //                     let td = tr.insertCell();
+                    //                     td.innerHTML = col;
+                    //                 }
+                    //             }
+                    //         }
+                    //     }
+                    // }
+
+                    // xhttp.open("GET", "http://192.168.4.22/downloadHistory", true);
+                    // xhttp.send();
+                }
+            </script>
+        </div>
     </body>
 
 </html>

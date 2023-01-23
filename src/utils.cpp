@@ -19,7 +19,7 @@ void setupUtils() {
       Serial.println("Persistence: SPIFFS begin failed");
   }
 
-  // Debugging purpose
+  // // Debugging purpose
   // File root = SPIFFS.open("/");
   // File file = root.openNextFile();
   // while(file) {
@@ -27,6 +27,10 @@ void setupUtils() {
   //     file.close();
   //     file = root.openNextFile();
   // }
+
+ // see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+  setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/ 3", 1);
+  tzset();
 
   setupTemperatureSensors();
   setupVoltageSensor();
@@ -49,7 +53,7 @@ void gotoSleep() {
   monitoringWebServer.stop();
   // TODO stop the timeout user session
 
-  time_t timeToSleep = 30; // TODO restore a reliable 60s
+  time_t timeToSleep = 60; // TODO restore a reliable 60s
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_33, 1);

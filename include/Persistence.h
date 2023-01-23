@@ -10,7 +10,8 @@ class Persistence {
     Persistence();
     void addDataPoint(DataPoint& dataPoint);
     DataPoint getLastDataPoint();
-
+    int getDataPoints(DataPoint *dataPoints, int count, int offset);
+    
     private:
     // DataPoint dataPoints[PERSISTANCE_BUFFER_SIZE];
     // uint dataCursor;

@@ -45,7 +45,47 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->on("/downloadHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /downloadHistory");
-        request->send(SPIFFS, "/EcsMonitoring.tsv", "text/plain");
+        request->send(SPIFFS, "/EcsMonitoring.dat", "application/octet-stream");
+    });
+
+
+    server->on("/history", HTTP_GET, [](AsyncWebServerRequest *request) {      
+        int count = 1;
+        if (request->hasParam("count")) {
+            count = request->getParam("count")->value().toInt();
+        }
+
+        int offset = 0;
+        if (request->hasParam("offset")) {
+            offset = request->getParam("offset")->value().toInt();
+        }
+
+        Serial.printf("server: /history %d %d\n", count, offset);
+
+        DataPoint *data = new DataPoint[count];
+        int count_ = persistence.getDataPoints(data, count, offset);
+        if (count_ > 0) {
+            String result = String();
+            char date_string[21];
+            char csvStr[100];
+            for (int i = 0; i < count_; i++) {
+                DataPoint newPoint = data[i];
+                strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
+    
+                sprintf(csvStr, "%s,%.01f,%.01f,%s\n",
+                    date_string,
+                    (float)newPoint.coldTemperature / 10.0f,
+                    (float)newPoint.hotTemperature / 10.0f,
+                    newPoint.heating ? "Oui" : "Non");
+
+                result.concat(csvStr);
+            }
+            request->send(200, "text/plain", result);
+        } else {
+            request->send(500);
+        }
+
+        delete(data);
     });
 
     server->on("/getInstantValues", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -73,11 +113,7 @@ MonitoringWebServer::MonitoringWebServer() {
             tmval.tv_sec = param.toInt();
             tmval.tv_usec = 0;
             settimeofday(&tmval, NULL);
-
-            // see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
-            setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/ 3", 1);
-            tzset();
-
+            
             char date_string[21];
             time_t now = time(NULL);
             strftime(date_string, 20, "%d/%m/%y %T", localtime(&now));
