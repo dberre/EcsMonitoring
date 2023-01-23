@@ -60,15 +60,18 @@ Logiciel ESP
 
     - Lecture etat chauffe
 
+interesting commands
+sudo /Library/Application\ Support/Wireshark/ChmodBPF/ChmodBPF
 
-21/01/23 21:50:14,18.6,19.6,Non
-21/01/23 21:49:42,18.6,19.6,Non
-21/01/23 21:49:11,18.5,19.6,Non
-21/01/23 21:48:39,18.5,19.6,Non
-21/01/23 21:48:07,18.5,19.6,Non
-21/01/23 21:47:36,18.6,19.6,Non
-21/01/23 21:47:04,18.5,19.6,Non
-21/01/23 21:46:32,18.5,19.5,Non
-21/01/23 21:46:01,18.5,19.5,Non
-21/01/23 21:45:29,18.5,19.5,Non
+curl -d " -H "Content-Type: application/x-www-form-urlencoded"   -X GET http://192.168.4.22/getInstantValues
 
+-d: is same as --data-ascii (using this flag, the default content-type sent to the server is application/x-www-form-urlencoded)
+-i: show the HTTP response headers
+-v: verbose (response and protocol details)
+-G or --get are same
+
+curl -G -i -d 'timeEpoch=1921' http://192.168.4.22/setTime
+
+curl -G -i http://192.168.4.22/getInstantValues
+
+curl -G -i -d 'count=10&offset=10'  http://192.168.4.22/history

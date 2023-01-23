@@ -28,7 +28,7 @@ DataPoint Persistence::getLastDataPoint() {
 
 void Persistence::saveToFile() {
     Serial.println("Persistance save");
-    File file = SPIFFS.open(dataFilename, "a", true);
+    File file = SPIFFS.open(dataFilename, "ab", true);
     for (int i = 0; i < dataCursor; i++) {
         DataPoint pt = dataPoints[i];
         file.write((const uint8_t *)(&pt), sizeof(DataPoint));
@@ -37,7 +37,7 @@ void Persistence::saveToFile() {
 }
 
 int Persistence::getDataPoints(DataPoint *dataPoints, int count, int offset = 0) {
-    File file = SPIFFS.open(dataFilename);
+    File file = SPIFFS.open(dataFilename, "rb");
     
     int count_ = count;
     if ((count_ + offset) * sizeof(DataPoint) > file.available()) {
@@ -60,4 +60,9 @@ int Persistence::getDataPoints(DataPoint *dataPoints, int count, int offset = 0)
     file.close();
 
     return count_;
+}
+
+void Persistence::clear() {
+    File file = SPIFFS.open(dataFilename, "wb");
+    file.close();
 }

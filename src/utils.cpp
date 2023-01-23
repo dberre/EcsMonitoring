@@ -13,20 +13,24 @@ RTC_DATA_ATTR Persistence persistence;
 
 MonitoringWebServer monitoringWebServer;
 
+void listRootDirectory() {
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  while(file) {
+      Serial.printf("File: %s\n", file.name());
+      file.close();
+      file = root.openNextFile();
+  }
+}
+
 void setupUtils() {
 
   if(!SPIFFS.begin()) {
       Serial.println("Persistence: SPIFFS begin failed");
   }
 
-  // // Debugging purpose
-  // File root = SPIFFS.open("/");
-  // File file = root.openNextFile();
-  // while(file) {
-  //     Serial.printf("File: %s\n", file.name());
-  //     file.close();
-  //     file = root.openNextFile();
-  // }
+  // Debugging purpose
+  listRootDirectory();
 
  // see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
   setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/ 3", 1);

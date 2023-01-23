@@ -48,7 +48,6 @@ MonitoringWebServer::MonitoringWebServer() {
         request->send(SPIFFS, "/EcsMonitoring.dat", "application/octet-stream");
     });
 
-
     server->on("/history", HTTP_GET, [](AsyncWebServerRequest *request) {      
         int count = 1;
         if (request->hasParam("count")) {
@@ -86,6 +85,12 @@ MonitoringWebServer::MonitoringWebServer() {
         }
 
         delete(data);
+    });
+
+    server->on("/clearHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /clearHistory");
+        persistence.clear();
+        request->send(200);
     });
 
     server->on("/getInstantValues", HTTP_GET, [](AsyncWebServerRequest *request) {
