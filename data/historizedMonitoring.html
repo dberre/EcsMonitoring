@@ -33,35 +33,28 @@
                     var table = document.getElementById("table");
                     table.innerHTML = ""
 
-                    fetch("http://192.168.4.22/history&count=4").then(res =>  {
-                        res.text()
-                    }).then(csv => {
-                        console.log(csv)
-                    })
-                    // var xhttp = new XMLHttpRequest();
+                    var xhttp = new XMLHttpRequest();
             
-                    // xhttp.onreadystatechange = function() {
-                    //     console.log("state:" + this.readyState);
-                    //     console.log("type:" + this.responseType);
-                    //     console.log(this.response);
-                    //     if (this.readyState == 4 && this.status == 200) {
-                    //         let rows = this.responseText.split("\r\n");
-                    //         for (let row of rows) {
-                    //             let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
-                    //             console.log(cols)
-                    //             if (cols != null) {
-                    //                 let tr = table.insertRow();
-                    //                 for (let col of cols) {
-                    //                     let td = tr.insertCell();
-                    //                     td.innerHTML = col;
-                    //                 }
-                    //             }
-                    //         }
-                    //     }
-                    // }
+                    xhttp.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) {
+                            let rows = this.responseText.split("\n");
+                            console.log(rows)
+                            for (let row of rows) {
+                                let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
+                                console.log(cols)
+                                if (cols != null) {
+                                    let tr = table.insertRow();
+                                    for (let col of cols) {
+                                        let td = tr.insertCell();
+                                        td.innerHTML = col;
+                                    }
+                                }
+                            }
+                        }
+                    }
 
-                    // xhttp.open("GET", "http://192.168.4.22/downloadHistory", true);
-                    // xhttp.send();
+                    xhttp.open("GET", "http://192.168.4.22/history?count=10", true);
+                    xhttp.send();
                 }
             </script>
         </div>
