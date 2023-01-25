@@ -12,16 +12,19 @@ MonitoringWebServer::MonitoringWebServer() {
     server->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /");
         request->send(SPIFFS, "/index.html", "text/html");
+        watchdogTimer->restart();
     });
 
     server->on("/immediateMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /immediateMonitoring");
         request->send(SPIFFS, "/immediateMonitoring.html", "text/html");
+        watchdogTimer->restart();
     });
     
     server->on("/historizedMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /historizedMonitoring");
         request->send(SPIFFS, "/historizedMonitoring.html", "text/html");
+        watchdogTimer->restart();
     });
     
     server->on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -45,7 +48,10 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->on("/downloadHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /downloadHistory");
+        acquisitionTimer->suspend();
         request->send(SPIFFS, "/EcsMonitoring.dat", "application/octet-stream");
+        acquisitionTimer->resume();
+        watchdogTimer->restart();
     });
 
     server->on("/history", HTTP_GET, [](AsyncWebServerRequest *request) {      
@@ -62,7 +68,10 @@ MonitoringWebServer::MonitoringWebServer() {
         Serial.printf("server: /history %d %d\n", count, offset);
 
         DataPoint *data = new DataPoint[count];
+        acquisitionTimer->suspend();
         int count_ = persistence.getDataPoints(data, count, offset);
+        acquisitionTimer->resume();
+        
         if (count_ > 0) {
             String result = String();
             char date_string[21];
@@ -85,17 +94,24 @@ MonitoringWebServer::MonitoringWebServer() {
         }
 
         delete(data);
+        watchdogTimer->restart();
     });
 
     server->on("/clearHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /clearHistory");
+        acquisitionTimer->suspend();
         persistence.clear();
+        acquisitionTimer->resume();
         request->send(200);
+        watchdogTimer->restart();
     });
 
     server->on("/getInstantValues", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /getInstantValues");
+
+        acquisitionTimer->suspend();
         DataPoint newPoint = makeMeasurement();
+        acquisitionTimer->resume();
 
         char date_string[21];
         strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
@@ -107,6 +123,7 @@ MonitoringWebServer::MonitoringWebServer() {
             (float)newPoint.hotTemperature / 10.0f,
              newPoint.heating ? "Oui" : "Non");
         request->send(200, "application/json", String(jsonStr));
+        watchdogTimer->restart();
     });
 
     server->on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -128,6 +145,7 @@ MonitoringWebServer::MonitoringWebServer() {
         } else {
             request->send(500);
         }
+        watchdogTimer->restart();
     });
 }
 

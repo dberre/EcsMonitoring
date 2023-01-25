@@ -1,23 +1,7 @@
 #include <Arduino.h>
 
-#include "MonitoringWebServer.h"
-
 #include "Utils.h"
 #include "DataPoint.h"
-
-void setupForRTCWakeup() {
-  Serial.println("setupForRTCWakeup");
-  DataPoint newPoint = makeMeasurement();
-  saveMeasurement(newPoint);
-  Serial.printf("%d\t%d\t%d\t%d\n", newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, (newPoint.heating) ? 1 : 0);  
-  gotoSleep();
-}
-
-void setupForUserWakeup() {
-  Serial.println("setupForUserWakeup");
-  monitoringWebServer.start();
-  // TODO start a timer to go in sleep if no user request
-}
 
 void setup() {
   Serial.begin(115200);
@@ -39,4 +23,11 @@ void setup() {
 }
 
 void loop() {
+  if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE) {
+    DataPoint newPoint = makeMeasurement();
+    saveMeasurement(newPoint);
+    acquisitionTimer->start();
+    Serial.printf("loop: %d\t%d\t%d\t%d\n", 
+      newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, (newPoint.heating) ? 1 : 0);  
+  }
 }

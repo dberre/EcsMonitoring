@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <time.h>
+#include <esp_timer.h>
 
 #include "utils.h"
 #include "Spiffs.h"
@@ -9,9 +10,14 @@
 #include "Persistence.h"
 #include "DataPoint.h"
 
-RTC_DATA_ATTR Persistence persistence;
+Persistence persistence;
 
 MonitoringWebServer monitoringWebServer;
+
+// Timer dedicated to periodic measurements
+esp_timer_handle_t _timer;
+
+volatile SemaphoreHandle_t timerSemaphore;
 
 void listRootDirectory() {
   File root = SPIFFS.open("/");
@@ -38,6 +44,31 @@ void setupUtils() {
 
   setupTemperatureSensors();
   setupVoltageSensor();
+
+  timerSemaphore = xSemaphoreCreateBinary();
+}
+
+void makeMeasurementISR() {
+  ets_printf("ISR\n");
+  xSemaphoreGiveFromISR(timerSemaphore, NULL);
+}
+
+void startAcquisitionTimer() {
+  esp_timer_create_args_t _timerConfig;
+  _timerConfig.arg = NULL;
+  _timerConfig.callback = reinterpret_cast<esp_timer_cb_t>(makeMeasurementISR);
+  _timerConfig.dispatch_method = ESP_TIMER_TASK;
+  _timerConfig.name = "";
+  esp_timer_create(&_timerConfig, &_timer);
+  esp_timer_start_once(_timer, computeNextTick() * 1000000ULL); // TODO
+}
+
+void stopAcquisitionTimer() {
+  if (_timer != NULL) {
+    esp_timer_stop(_timer);
+    esp_timer_delete(_timer);
+    _timer = NULL;
+  }
 }
 
 DataPoint makeMeasurement() {
@@ -55,7 +86,7 @@ void saveMeasurement(DataPoint& point) {
 
 void gotoSleep() {
   monitoringWebServer.stop();
-  // TODO stop the timeout user session
+  stopAcquisitionTimer();
 
   time_t timeToSleep = 60; // TODO restore a reliable 60s
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
@@ -64,6 +95,18 @@ void gotoSleep() {
   esp_deep_sleep_start();
 }
 
-void setTime() {
-  
+time_t computeNextTick() {
+  time_t now = time(NULL);
+  tm *tnow = localtime(&now);
+  tnow->tm_min += 1;
+  tnow->tm_sec = 0;
+  if (tnow->tm_min > 59) {
+    tnow->tm_min = 0;
+    tnow->tm_hour += 1;
+    if (tnow->tm_hour > 23) {
+      tnow->tm_hour = 0;
+      tnow->tm_mday += 1;
+    }
+  }
+  return mktime(tnow) - now;
 }
