@@ -4,6 +4,8 @@
 
 #include "utils.h"
 #include "Spiffs.h"
+#include "AcquisitionTimer.h"
+#include "WatchdogTimer.h"
 #include "MonitoringWebServer.h"
 #include "VoltageSensor.h"
 #include "TemperatureSensors.h"
@@ -14,10 +16,21 @@ Persistence persistence;
 
 MonitoringWebServer monitoringWebServer;
 
-// Timer dedicated to periodic measurements
-esp_timer_handle_t _timer;
+AcquisitionTimer *acquisitionTimer = NULL;
+
+WatchdogTimer *watchdogTimer = NULL;
 
 volatile SemaphoreHandle_t timerSemaphore;
+
+void makeMeasurementCallback(void *args) {
+  ets_printf("ISR\n");
+  xSemaphoreGiveFromISR(timerSemaphore, NULL);
+}
+
+void watchdogCallback(void *args) {
+  ets_printf("Watchdog expired\n");
+  // TODO
+}
 
 void listRootDirectory() {
   File root = SPIFFS.open("/");
@@ -48,27 +61,26 @@ void setupUtils() {
   timerSemaphore = xSemaphoreCreateBinary();
 }
 
-void makeMeasurementISR() {
-  ets_printf("ISR\n");
-  xSemaphoreGiveFromISR(timerSemaphore, NULL);
+void setupForRTCWakeup() {
+  Serial.println("setupForRTCWakeup");
+  DataPoint newPoint = makeMeasurement();
+  saveMeasurement(newPoint);
+  Serial.printf("RTC: %d\t%d\t%d\t%d\n",
+    newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, (newPoint.heating) ? 1 : 0);  
+  gotoSleep();
 }
 
-void startAcquisitionTimer() {
-  esp_timer_create_args_t _timerConfig;
-  _timerConfig.arg = NULL;
-  _timerConfig.callback = reinterpret_cast<esp_timer_cb_t>(makeMeasurementISR);
-  _timerConfig.dispatch_method = ESP_TIMER_TASK;
-  _timerConfig.name = "";
-  esp_timer_create(&_timerConfig, &_timer);
-  esp_timer_start_once(_timer, computeNextTick() * 1000000ULL); // TODO
-}
+void setupForUserWakeup() {
+  Serial.println("setupForUserWakeup");
 
-void stopAcquisitionTimer() {
-  if (_timer != NULL) {
-    esp_timer_stop(_timer);
-    esp_timer_delete(_timer);
-    _timer = NULL;
-  }
+  // timer to trig a measurement every 60s
+  acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback, 60000000ULL);
+  acquisitionTimer->start();
+
+  // watchdog to go to sleep mode after 60s of inactivity
+  watchdogTimer = new WatchdogTimer(&watchdogCallback, 60000000ULL);
+
+  monitoringWebServer.start();
 }
 
 DataPoint makeMeasurement() {
@@ -86,9 +98,19 @@ void saveMeasurement(DataPoint& point) {
 
 void gotoSleep() {
   monitoringWebServer.stop();
-  stopAcquisitionTimer();
+  if (acquisitionTimer != NULL) {
+    acquisitionTimer->stop();
+    delete(acquisitionTimer);
+    acquisitionTimer = NULL;
+  }
 
-  time_t timeToSleep = 60; // TODO restore a reliable 60s
+  if (watchdogTimer != NULL) {
+    watchdogTimer->stop();
+    delete(watchdogTimer);
+    watchdogTimer = NULL;
+  }
+
+  time_t timeToSleep = computeNextTick();
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_33, 1);
