@@ -30,6 +30,7 @@ void makeMeasurementCallback(void *args) {
 void watchdogCallback(void *args) {
   ets_printf("Watchdog expired\n");
   // TODO
+  gotoSleep();
 }
 
 void listRootDirectory() {
@@ -49,7 +50,7 @@ void setupUtils() {
   }
 
   // Debugging purpose
-  listRootDirectory();
+  // listRootDirectory();
 
  // see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
   setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/ 3", 1);
@@ -77,8 +78,8 @@ void setupForUserWakeup() {
   acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback, 60000000ULL);
   acquisitionTimer->start();
 
-  // watchdog to go to sleep mode after 60s of inactivity
-  watchdogTimer = new WatchdogTimer(&watchdogCallback, 60000000ULL);
+  // watchdog to go to sleep mode after 120s of inactivity
+  watchdogTimer = new WatchdogTimer(&watchdogCallback, 120000000ULL);
 
   monitoringWebServer.start();
 }

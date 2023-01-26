@@ -3,7 +3,7 @@
 
 #include "DataPoint.h"
 
-#define PERSISTANCE_BUFFER_SIZE 5
+#define PERSISTANCE_BUFFER_SIZE 30
 
 class Persistence {
     public:
