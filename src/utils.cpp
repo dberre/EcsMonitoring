@@ -7,6 +7,7 @@
 #include "AcquisitionTimer.h"
 #include "WatchdogTimer.h"
 #include "MonitoringWebServer.h"
+#include "Queues.h"
 #include "VoltageSensor.h"
 #include "TemperatureSensors.h"
 #include "Persistence.h"
@@ -20,16 +21,13 @@ AcquisitionTimer *acquisitionTimer = NULL;
 
 WatchdogTimer *watchdogTimer = NULL;
 
-volatile SemaphoreHandle_t timerSemaphore;
-
 void makeMeasurementCallback(void *args) {
   ets_printf("ISR\n");
-  xSemaphoreGiveFromISR(timerSemaphore, NULL);
+  xQueueSend(xQueue1, (void *)(&trigMeasurementMsg), 0);
 }
 
 void watchdogCallback(void *args) {
   ets_printf("Watchdog expired\n");
-  // TODO
   gotoSleep();
 }
 
@@ -46,20 +44,19 @@ void listRootDirectory() {
 void setupUtils() {
 
   if(!SPIFFS.begin()) {
-      Serial.println("Persistence: SPIFFS begin failed");
+    Serial.println("Persistence: SPIFFS begin failed");
   }
 
   // Debugging purpose
   // listRootDirectory();
 
- // see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+  // see https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
   setenv("TZ", "CET-1CEST,M3.5.0/2,M10.5.0/ 3", 1);
   tzset();
 
   setupTemperatureSensors();
   setupVoltageSensor();
-
-  timerSemaphore = xSemaphoreCreateBinary();
+  setupQueues();
 }
 
 void setupForRTCWakeup() {
@@ -110,6 +107,8 @@ void gotoSleep() {
     delete(watchdogTimer);
     watchdogTimer = NULL;
   }
+
+  deleteQueues();
 
   time_t timeToSleep = computeNextTick();
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);

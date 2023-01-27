@@ -4,6 +4,7 @@
 
 #include "MonitoringWebServer.h"
 #include "utils.h"
+#include "Queues.h"
 #include "DataPoint.h"
 
 MonitoringWebServer::MonitoringWebServer() {
@@ -99,31 +100,37 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->on("/clearHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /clearHistory");
-        acquisitionTimer->suspend();
-        persistence.clear();
-        acquisitionTimer->resume();
-        request->send(200);
-        watchdogTimer->restart();
+        BaseType_t flag;
+        if (xQueueSend(xQueue1, (void*)(&clearHistoryMsg), 0) == pdTRUE) {
+            request->send(200);
+        } else {
+            request->send(500);
+        }
     });
 
     server->on("/getInstantValues", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /getInstantValues");
-
-        acquisitionTimer->suspend();
-        DataPoint newPoint = makeMeasurement();
-        acquisitionTimer->resume();
-
-        char date_string[21];
-        strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
-        
-        char jsonStr[100];
-        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\" }",
-            date_string,
-            (float)newPoint.coldTemperature / 10.0f,
-            (float)newPoint.hotTemperature / 10.0f,
-             newPoint.heating ? "Oui" : "Non");
-        request->send(200, "application/json", String(jsonStr));
         watchdogTimer->restart();
+
+        if (xQueueSend(xQueue1, (void*)(&getMeasurementMsg), 0) == pdTRUE) {
+            DataPoint newPoint;
+            if (xQueueReceive(xQueue2, &newPoint, 1000 / portTICK_PERIOD_MS) == pdTRUE) {
+                char date_string[21];
+                strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
+                
+                char jsonStr[100];
+                sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\" }",
+                    date_string,
+                    (float)newPoint.coldTemperature / 10.0f,
+                    (float)newPoint.hotTemperature / 10.0f,
+                    newPoint.heating ? "Oui" : "Non");
+                request->send(200, "application/json", String(jsonStr));
+            } else {
+                request->send(500);
+            }
+        } else {
+            request->send(500);
+        }
     });
 
     server->on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {

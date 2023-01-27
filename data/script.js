@@ -34,8 +34,10 @@ function setTimeButton() {
     xhttp.send();
 }
 
-function getHistoryPage() {
-    
+function clearHistoryButton() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "clearHistory", true);
+    xhttp.send();    
 }
 
 function downloadFile(urlToSend) {
