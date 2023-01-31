@@ -3,14 +3,33 @@
 
 #include <Arduino.h>
 
-enum QueueSendMsg: long { trigMeasurementQueueMsg, getMeasurementQueueMsg, clearHistoryQueueMsg };
+#include "DataPoint.h"
 
-extern QueueHandle_t xQueue1;
-extern QueueHandle_t xQueue2;
+struct RequestQueueMsg {
+    enum MsgTypes: long { undef, trigMeasurement, getMeasurement, getHistory, clearHistory };
 
-extern const QueueSendMsg trigMeasurementMsg;
-extern const QueueSendMsg getMeasurementMsg;
-extern const QueueSendMsg clearHistoryMsg;
+    RequestQueueMsg();
+    RequestQueueMsg(MsgTypes type);
+    RequestQueueMsg(MsgTypes type, int count, int offset);
+
+    MsgTypes msgType;
+    int args[2];
+};
+
+struct ResponseQueueMsg {
+    ResponseQueueMsg();
+
+    int count;
+    DataPoint *points;
+};
+
+#define TrigMeasurementRequest RequestQueueMsg(RequestQueueMsg::MsgTypes::trigMeasurement)
+#define GetMeasurementRequest RequestQueueMsg(RequestQueueMsg::MsgTypes::getMeasurement)
+#define GetHistoryRequest(count, offset) RequestQueueMsg(RequestQueueMsg::MsgTypes::getHistory, (count), (offset))
+#define ClearHistoryRequest RequestQueueMsg(RequestQueueMsg::MsgTypes::clearHistory)
+
+extern QueueHandle_t requestQueue;
+extern QueueHandle_t responseQueue;
 
 extern void setupQueues();
 extern void deleteQueues();

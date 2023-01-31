@@ -68,40 +68,55 @@ MonitoringWebServer::MonitoringWebServer() {
 
         Serial.printf("server: /history %d %d\n", count, offset);
 
-        DataPoint *data = new DataPoint[count];
-        acquisitionTimer->suspend();
-        int count_ = persistence.getDataPoints(data, count, offset);
-        acquisitionTimer->resume();
+        RequestQueueMsg req = GetHistoryRequest(count, offset);
         
-        if (count_ > 0) {
-            String result = String();
-            char date_string[21];
-            char csvStr[100];
-            for (int i = 0; i < count_; i++) {
-                DataPoint newPoint = data[i];
-                strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
-    
-                sprintf(csvStr, "%s,%.01f,%.01f,%s\n",
-                    date_string,
-                    (float)newPoint.coldTemperature / 10.0f,
-                    (float)newPoint.hotTemperature / 10.0f,
-                    newPoint.heating ? "Oui" : "Non");
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
+            ResponseQueueMsg response;
+            uint32_t t0 = millis();
 
-                result.concat(csvStr);
+            while (true) {
+                if ((millis() - t0) > 1000) {
+                    // time out, no response received
+                    request->send(500);
+                    break;
+                } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+                    if (response.count > 0) {
+                        String result = String();
+                        char date_string[21];
+                        char csvStr[100];
+                        for (int i = 0; i < response.count; i++) {
+                            DataPoint newPoint = response.points[i];
+                            strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
+                
+                            sprintf(csvStr, "%s,%.01f,%.01f,%s\n",
+                                date_string,
+                                (float)newPoint.coldTemperature / 10.0f,
+                                (float)newPoint.hotTemperature / 10.0f,
+                                newPoint.heating ? "Oui" : "Non");
+
+                            result.concat(csvStr);
+                        }
+                        request->send(200, "text/plain", result);
+                    } else {
+                        // response is empty
+                        request->send(500);
+                    }
+                    delete(response.points);
+                    break;
+                }
             }
-            request->send(200, "text/plain", result);
         } else {
+            // the queue is full, can't send the request
             request->send(500);
         }
 
-        delete(data);
         watchdogTimer->restart();
     });
 
     server->on("/clearHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /clearHistory");
-        BaseType_t flag;
-        if (xQueueSend(xQueue1, (void*)(&clearHistoryMsg), 0) == pdTRUE) {
+        RequestQueueMsg req = ClearHistoryRequest;
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
             request->send(200);
         } else {
             request->send(500);
@@ -112,23 +127,35 @@ MonitoringWebServer::MonitoringWebServer() {
         Serial.println("server: /getInstantValues");
         watchdogTimer->restart();
 
-        if (xQueueSend(xQueue1, (void*)(&getMeasurementMsg), 0) == pdTRUE) {
-            DataPoint newPoint;
-            if (xQueueReceive(xQueue2, &newPoint, 1000 / portTICK_PERIOD_MS) == pdTRUE) {
-                char date_string[21];
-                strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
-                
-                char jsonStr[100];
-                sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\" }",
-                    date_string,
-                    (float)newPoint.coldTemperature / 10.0f,
-                    (float)newPoint.hotTemperature / 10.0f,
-                    newPoint.heating ? "Oui" : "Non");
-                request->send(200, "application/json", String(jsonStr));
-            } else {
-                request->send(500);
+        RequestQueueMsg req = GetMeasurementRequest;
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
+            ResponseQueueMsg response;
+            uint32_t t0 = millis();
+            bool received = false;
+            while (!received) {
+                if ((millis() - t0) > 1500) {
+                    // time out, no response received
+                    request->send(500);
+                    break;
+                } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+                    if (response.count == 1) {  
+                        char date_string[21];
+                        strftime(date_string, 20, "%d/%m/%y %T", localtime(&(response.points[0].timestamp)));
+                        
+                        char jsonStr[100];
+                        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\" }",
+                            date_string,
+                            (float)response.points[0].coldTemperature / 10.0f,
+                            (float)response.points[0].hotTemperature / 10.0f,
+                            response.points[0].heating ? "Oui" : "Non");
+                        request->send(200, "application/json", String(jsonStr));
+                        received = true;
+                    }
+                    delete(response.points);
+                }
             }
         } else {
+            // the queue is full, can't send the request
             request->send(500);
         }
     });

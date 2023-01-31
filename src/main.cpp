@@ -24,11 +24,11 @@ void setup() {
 }
 
 void loop() {
-  QueueSendMsg msgQueue;
-  if (xQueueReceive(xQueue1, &msgQueue,  1000 / portTICK_PERIOD_MS) == pdTRUE) {
+  RequestQueueMsg msgQueue;
+  if (xQueueReceive(requestQueue, &msgQueue,  1000 / portTICK_PERIOD_MS) == pdTRUE) {
     Serial.printf("xQueue receive %ld\n", msgQueue);
-    switch(msgQueue) {
-      case trigMeasurementQueueMsg: {
+    switch(msgQueue.msgType) {
+      case RequestQueueMsg::MsgTypes::trigMeasurement: {
           DataPoint newPoint = makeMeasurement();
           saveMeasurement(newPoint);
           acquisitionTimer->start();
@@ -36,13 +36,28 @@ void loop() {
             newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, (newPoint.heating) ? 1 : 0);
         }
         break;
-      case getMeasurementQueueMsg: {
+      case RequestQueueMsg::MsgTypes::getMeasurement: {
           DataPoint newPoint = makeMeasurement();
-          xQueueSend(xQueue2, &newPoint, 0);
+          ResponseQueueMsg response;
+          response.count = 1;
+          response.points = new DataPoint[1];
+          response.points[0] = newPoint;
+          xQueueSend(responseQueue, &response, 0);
         }
         break;
-      case clearHistoryQueueMsg:
+      case RequestQueueMsg::MsgTypes::getHistory: {
+          int count = msgQueue.args[0];
+          int offset = msgQueue.args[1];
+          ResponseQueueMsg response;
+          response.points = new DataPoint[count];
+          response.count = persistence.getDataPoints(response.points, count, offset);
+          xQueueSend(responseQueue, &response, 0);
+        }
+        break;
+      case RequestQueueMsg::MsgTypes::clearHistory:
         persistence.clear();
+        break;
+      default:
         break;
     }
   }

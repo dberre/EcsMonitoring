@@ -2,6 +2,8 @@
 #define _PERSISTENCE_H
 
 bool setupTemperatureSensors(void);
+void requestColdTemperature();
+void requestHotTemperature();
 float getColdTemperature();
 float getHotTemperature();
 

@@ -23,7 +23,8 @@ WatchdogTimer *watchdogTimer = NULL;
 
 void makeMeasurementCallback(void *args) {
   ets_printf("ISR\n");
-  xQueueSend(xQueue1, (void *)(&trigMeasurementMsg), 0);
+  RequestQueueMsg req = TrigMeasurementRequest;
+  xQueueSend(requestQueue, &req, 0);
 }
 
 void watchdogCallback(void *args) {
@@ -83,6 +84,10 @@ void setupForUserWakeup() {
 
 DataPoint makeMeasurement() {
   DataPoint newPoint;
+  // the two instructions below launch the temperature reading in parallel
+  // each is 675 ms, so finally 675ms for both when done in parallel
+  requestColdTemperature();
+  requestHotTemperature();
   newPoint.coldTemperature = (int16_t)(getColdTemperature() * 10.0f);
   newPoint.hotTemperature = (int16_t)(getHotTemperature() * 10.0f);
   newPoint.heating = getHeaterState();

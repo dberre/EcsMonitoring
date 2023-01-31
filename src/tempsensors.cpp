@@ -10,6 +10,8 @@ OneWire hotSensorPin(HOT_SENSOR_PIN);
 DS18B20 coldSensor(&coldSensorPin);
 DS18B20 hotSensor(&hotSensorPin);
 
+#define TIME_OUT_MS 800UL
+
 static bool setupTemperatureSensor(DS18B20& sensor) {
     if (!sensor.begin()) { return false; }
     sensor.setResolution(12);
@@ -18,9 +20,8 @@ static bool setupTemperatureSensor(DS18B20& sensor) {
 
 static float getTemperature(DS18B20& sensor) {
   uint32_t start = millis();
-  uint32_t timeout = millis();
   while (!sensor.isConversionComplete()) {
-      if (millis() - timeout >= 800) {
+      if (millis() - start >= TIME_OUT_MS) {
         // timeout
         Serial.printf("getTemperature: timeout\n");
           return __FLT_MIN__;
@@ -36,15 +37,21 @@ bool setupTemperatureSensors(void)
     return true;
 }
 
-float getColdTemperature() {
+void requestColdTemperature() {
     coldSensor.requestTemperatures();
+}
+
+void requestHotTemperature() {
+    hotSensor.requestTemperatures();
+}
+
+float getColdTemperature() {
     float t = getTemperature(coldSensor);
     Serial.printf("getColdTemperature %f\n", t);
     return t;
 }
 
 float getHotTemperature() {
-    hotSensor.requestTemperatures();
     float t = getTemperature(hotSensor);
     Serial.printf("getHotTemperature %f\n", t);
     return t;
