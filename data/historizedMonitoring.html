@@ -18,46 +18,88 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
         <link rel="stylesheet" type="text/css" href="w3.css">
         <script type="text/javascript" src="script.js"></script>
+        <script>
+            function getPageSize() {
+                return Number(document.getElementById("inputPageSize").value);
+            } 
+
+            function getPageOffset() {
+                return Number(document.getElementById("inputPageOffset").value);
+            }
+            
+            function setPageSize(newValue) {
+                document.getElementById("inputPageSize").value = newValue;
+            } 
+
+            function setPageOffset(newValue) {
+                document.getElementById("inputPageOffset").value = newValue;
+            }
+
+            window.onload = () => {
+                fillTable();
+            }
+
+            function pagePlus() {
+                setPageOffset(getPageOffset() + getPageSize());
+                fillTable();
+            }
+
+            function pageMinus() {
+                var pageOffset = getPageOffset() - getPageSize();
+                if (pageOffset < 0) {
+                    pageOffset = 0;
+                }
+                setPageOffset(pageOffset);
+                fillTable();
+            }
+
+            function fillTable() {
+                var table = document.getElementById("table");
+                table.innerHTML = ""
+
+                var xhttp = new XMLHttpRequest();
+        
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        let rows = this.responseText.split("\n");
+                        console.log(rows)
+                        for (let row of rows) {
+                            let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
+                            console.log(cols)
+                            if (cols != null) {
+                                let tr = table.insertRow();
+                                for (let col of cols) {
+                                    let td = tr.insertCell();
+                                    td.innerHTML = col;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                xhttp.open("GET", `http://192.168.4.22/history?count=${getPageSize()}&offset=${getPageOffset()}` , true);
+                xhttp.send();
+            }
+
+        </script>
     </head>
 
     <body class="w3-animate-opacity">
         <div class="w3-card w3-blue w3-padding-small w3-center">
             <h1>Historique</h1>
         </div>
-
+        <br>
+        <div>
+            <label for="inputPageSize">Page size</label>
+            <input type="number", id="inputPageSize", name="inputPageSize", value="10" min="10", max="60"/>
+            <label for="inputPageOffset">Offset</label>
+            <input type="number", id="inputPageOffset", name="inputPageOffset", value="0"/>
+            <button onclick="pagePlus()">Page +</button>
+            <button onclick="pageMinus()">Page -</button>              
+        </div>
+        <br>
         <div>
             <table id="table"></table>
-
-            <script>
-                window.onload = () => {
-                    var table = document.getElementById("table");
-                    table.innerHTML = ""
-
-                    var xhttp = new XMLHttpRequest();
-            
-                    xhttp.onreadystatechange = function() {
-                        if (this.readyState == 4 && this.status == 200) {
-                            let rows = this.responseText.split("\n");
-                            console.log(rows)
-                            for (let row of rows) {
-                                let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
-                                console.log(cols)
-                                if (cols != null) {
-                                    let tr = table.insertRow();
-                                    for (let col of cols) {
-                                        let td = tr.insertCell();
-                                        td.innerHTML = col;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    xhttp.open("GET", "http://192.168.4.22/history?count=10", true);
-                    xhttp.send();
-                }
-            </script>
         </div>
     </body>
-
 </html>
