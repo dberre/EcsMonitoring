@@ -88,6 +88,9 @@ int Persistence::getDataPoints(DataPoint *dataPoints, int nbToRead, int offset =
 }
 
 void Persistence::clear() {
+    // erase file history
     File file = SPIFFS.open(dataFilename, "wb");
     file.close();
+    // erase local history
+    dataCursor_ = 0;
 }
