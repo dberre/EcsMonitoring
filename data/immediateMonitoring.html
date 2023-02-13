@@ -38,6 +38,9 @@
                 margin-left: auto; 
                 margin-right: auto;
             }
+            th, td {
+                padding: 0 1rem;
+            }
         </style>
     </head>
 
@@ -49,26 +52,26 @@
         <div class="w3-margin w3-center w3card w3-padding">
             <table class="center">
                 <tr>
-                    <td>Date</td>
+                    <td>Date:</td>
                     <td><span id="dateTime">-</span></td>
                 </tr>
                 <tr>
-                    <td>Temperature entrée</td>
+                    <td>Temperature entrée:</td>
                     <td><span id="inputTemperature">-</span></td>
                 </tr>
                 <tr>
-                    <td>Temperature sortie</td>
+                    <td>Temperature sortie:</td>
                     <td><span id="outputTemperature">-</span></td>
                 </tr>
                 <tr>
-                    <td>En chauffe</td>
+                    <td>En chauffe:</td>
                     <td><span id="heaterState">-</span></td>
                 </tr>
             </table>
         </div>
 
         <div class="w3-padding-24 w3-center">
-            <button onClick="backHomeButton()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Menu principal</button>
+            <button onClick="window.location.href='/'"  class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Menu principal</button>
         </div>
 
     </body>
