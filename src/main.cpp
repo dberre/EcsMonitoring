@@ -1,6 +1,8 @@
 #include <Arduino.h>
 
 #include "Utils.h"
+#include "VoltageSensor.h"
+#include "RmsVoltageSensor.h"
 #include "Queues.h"
 #include "DataPoint.h"
 
@@ -42,6 +44,11 @@ void loop() {
           response.count = 1;
           response.points = new DataPoint[1];
           response.points[0] = newPoint;
+          xQueueSend(responseQueue, &response, 0);
+        }
+        break;
+      case RequestQueueMsg::MsgTypes::getVoltage: {
+          float response = RmsVoltageSensor::defaultInstance()->readVoltage(2, 200);
           xQueueSend(responseQueue, &response, 0);
         }
         break;

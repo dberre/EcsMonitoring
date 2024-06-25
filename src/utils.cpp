@@ -77,7 +77,8 @@ void setupForUserWakeup() {
   acquisitionTimer->start();
 
   // watchdog to go to sleep mode after 120s of inactivity
-  watchdogTimer = new WatchdogTimer(&watchdogCallback, 120000000ULL);
+  // watchdogTimer = new WatchdogTimer(&watchdogCallback, 120000000ULL);
+   watchdogTimer = new WatchdogTimer(&watchdogCallback, 12000000000ULL);  // TODO very long timer for test purpose
 
   monitoringWebServer.start();
 }

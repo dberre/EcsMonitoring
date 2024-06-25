@@ -22,6 +22,12 @@ MonitoringWebServer::MonitoringWebServer() {
         watchdogTimer->restart();
     });
     
+    server->on("/voltageMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /voltageMonitoring");
+        request->send(SPIFFS, "/voltageMonitoring.html", "text/html");
+        watchdogTimer->restart();
+    });
+    
     server->on("/historizedMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /historizedMonitoring");
         request->send(SPIFFS, "/historizedMonitoring.html", "text/html");
@@ -152,6 +158,33 @@ MonitoringWebServer::MonitoringWebServer() {
                         received = true;
                     }
                     delete(response.points);
+                }
+            }
+        } else {
+            // the queue is full, can't send the request
+            request->send(500);
+        }
+    });
+
+    server->on("/getVoltage", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /getVoltage");
+        watchdogTimer->restart();
+
+        RequestQueueMsg req = GetVoltageRequest;
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
+            float response;
+            uint32_t t0 = millis();
+            bool received = false;
+            while (!received) {
+                if ((millis() - t0) > 1500) {
+                    // time out, no response received
+                    request->send(500);
+                    break;
+                } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+                    char jsonStr[40];
+                    sprintf(jsonStr, "{ \"voltage\":\"%.03f\" }", response);
+                    request->send(200, "application/json", String(jsonStr));
+                    received = true;
                 }
             }
         } else {
