@@ -7,16 +7,15 @@ class RmsVoltageSensor {
 
 public:
     RmsVoltageSensor();
-    float readVoltage(unsigned int crossings, unsigned int timeout);
+    float readVoltage(unsigned int duration);
 
     static RmsVoltageSensor *defaultInstance();
 
 private:
     adc1_channel_t adcChannel;
-    int offsetV;
-    int bitWidth;
 
     float adcToVoltRatio;
+
     static RmsVoltageSensor *_defaultInstance;
 };
 

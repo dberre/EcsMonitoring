@@ -13,6 +13,7 @@ void setupForUserWakeup();
 void startAcquisitionTimer();
 void stopAcquisitionTimer();
 DataPoint makeMeasurement();
+bool getHeaterState();
 void saveMeasurement(DataPoint& point);
 void gotoSleep();
 void setTime();

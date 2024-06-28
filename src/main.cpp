@@ -28,7 +28,7 @@ void setup() {
 void loop() {
   RequestQueueMsg msgQueue;
   if (xQueueReceive(requestQueue, &msgQueue,  1000 / portTICK_PERIOD_MS) == pdTRUE) {
-    Serial.printf("xQueue receive %ld\n", msgQueue);
+    //Serial.printf("xQueue receive %ld\n", msgQueue);
     switch(msgQueue.msgType) {
       case RequestQueueMsg::MsgTypes::trigMeasurement: {
           DataPoint newPoint = makeMeasurement();
@@ -48,7 +48,7 @@ void loop() {
         }
         break;
       case RequestQueueMsg::MsgTypes::getVoltage: {
-          float response = RmsVoltageSensor::defaultInstance()->readVoltage(2, 200);
+          float response = RmsVoltageSensor::defaultInstance()->readVoltage(40);
           xQueueSend(responseQueue, &response, 0);
         }
         break;

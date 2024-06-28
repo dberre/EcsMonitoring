@@ -12,7 +12,12 @@
                 xhttp.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
                         const obj = JSON.parse(this.responseText)
-                        document.getElementById("voltage").innerHTML = obj.voltage;
+                        const voltage = Number(obj.voltage);
+                        document.getElementById("voltage").innerHTML = voltage.toFixed(3);
+                        const current = (voltage * 30);
+                        document.getElementById("current").innerHTML = current.toFixed(3);
+                        const power = (current * 235);
+                        document.getElementById("power").innerHTML = power.toFixed(0);
                     }
                 }
 
@@ -48,6 +53,21 @@
                 <tr>
                     <td>Tension sortie transformateur:</td>
                     <td><span id="voltage">-</span></td>
+                    <td>V</td>
+                </tr>
+            </table>
+            <table class="center">
+                <tr>
+                    <td>Courant:</td>
+                    <td><span id="current">-</span></td>
+                    <td>A</td>
+                </tr>
+            </table>
+            <table class="center">
+                <tr>
+                    <td>Puissance:</td>
+                    <td><span id="power">-</span></td>
+                    <td>W</td>
                 </tr>
             </table>
         </div>

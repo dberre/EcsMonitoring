@@ -12,6 +12,7 @@
 #include "TemperatureSensors.h"
 #include "Persistence.h"
 #include "DataPoint.h"
+#include "RmsVoltageSensor.h"
 
 Persistence persistence;
 
@@ -94,6 +95,13 @@ DataPoint makeMeasurement() {
   newPoint.heating = getHeaterState();
   newPoint.timestamp = time(NULL);
   return newPoint;
+}
+
+bool getHeaterState() {
+    float voltage = RmsVoltageSensor::defaultInstance()->readVoltage(100);
+    return (voltage > 0.1);
+
+    // FIXME move elsewhere
 }
 
 void saveMeasurement(DataPoint& point) {
