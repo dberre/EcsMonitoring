@@ -5,10 +5,6 @@
 
 class Ads1115Sensor {
 private:    
-    uint _numberOfSamples = 0;
-    uint _adcChannel = 0;
-    float _convertedValue;
-
     byte _alertInterruptPin = 33;
 
     static Ads1115Sensor *_defaultInstance;
@@ -17,7 +13,7 @@ private:
 
     static SemaphoreHandle_t xBinarySemaphore;
 
-    static TaskHandle_t xTaskToNotify;
+    static TaskHandle_t xTaskToNotifyFromISR;
 
 public:
     Ads1115Sensor();
@@ -28,7 +24,6 @@ public:
 
 private:
     static void ISR_RMScallback();
-    static void ISR_RMSprocessing(void * parameter);
 };
 
 #endif
