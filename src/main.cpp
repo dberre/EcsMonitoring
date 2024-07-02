@@ -2,7 +2,7 @@
 
 #include "Utils.h"
 #include "VoltageSensor.h"
-#include "Ads1115.h"
+#include "Ads1115Board.h"
 #include "Queues.h"
 #include "DataPoint.h"
 
@@ -49,7 +49,7 @@ void loop() {
         break;
       case RequestQueueMsg::MsgTypes::getVoltage: {
           // float response = RmsVoltageSensor::defaultInstance()->readVoltage(40);
-          float response = Ads1115Sensor::defaultInstance()->readRmsVoltage(0, 3);
+          float response = Ads1115Board::defaultInstance()->readRmsVoltage(0, 3);
           xQueueSend(responseQueue, &response, 0);
         }
         break;
@@ -64,7 +64,7 @@ void loop() {
         break;
       case RequestQueueMsg::MsgTypes::clearHistory: {
           // persistence.clear(); FIXME
-          float response = Ads1115Sensor::defaultInstance()->readRmsVoltage(0, 3);
+          float response = Ads1115Board::defaultInstance()->readRmsVoltage(0, 3);
           Serial.printf("value:%f\n", response);
         }
         break;

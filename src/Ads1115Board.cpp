@@ -1,32 +1,28 @@
 #include <Arduino.h>
 
-#include "Ads1115.h"
+#include "Ads1115Board.h"
 
-Ads1115Sensor *Ads1115Sensor::_defaultInstance = 0;
+Ads1115Board *Ads1115Board::_defaultInstance = 0;
 
-ADS1115 *Ads1115Sensor::_board = 0;
+ADS1115 *Ads1115Board::_board = 0;
 
-SemaphoreHandle_t Ads1115Sensor::xBinarySemaphore = 0;
+TaskHandle_t Ads1115Board::xTaskToNotifyFromISR = 0;
 
-TaskHandle_t Ads1115Sensor::xTaskToNotifyFromISR = 0;
-
-Ads1115Sensor::Ads1115Sensor() {
+Ads1115Board::Ads1115Board() {
   _board = new ADS1115(0x48);
-
-  Ads1115Sensor::xBinarySemaphore = xSemaphoreCreateBinary();
 
   pinMode(_alertInterruptPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(_alertInterruptPin), ISR_RMScallback, FALLING);
 }
 
-Ads1115Sensor *Ads1115Sensor::defaultInstance() {
+Ads1115Board *Ads1115Board::defaultInstance() {
   if (_defaultInstance == 0) {
-    _defaultInstance = new Ads1115Sensor();
+    _defaultInstance = new Ads1115Board();
   }
   return _defaultInstance;
 }
 
-float Ads1115Sensor::readRmsVoltage(uint channel, uint numberOfSamples) {
+float Ads1115Board::readRmsVoltage(uint channel, uint numberOfSamples) {
 
   _board->begin();
 
@@ -79,7 +75,7 @@ float Ads1115Sensor::readRmsVoltage(uint channel, uint numberOfSamples) {
 }
 
 // The ISR routine called when the ADC conversion is ready
-void Ads1115Sensor::ISR_RMScallback() {
+void Ads1115Board::ISR_RMScallback() {
   // ets_printf("IRS_RMS\n");
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   vTaskNotifyGiveFromISR(xTaskToNotifyFromISR, &xHigherPriorityTaskWoken);
