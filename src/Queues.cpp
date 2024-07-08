@@ -17,7 +17,6 @@ RequestQueueMsg::RequestQueueMsg(MsgTypes type, int count, int offset) {
     this->args[1] = offset;
 }
 
-
 ResponseQueueMsg::ResponseQueueMsg() {
     this->count = 0;
     this->points = NULL;

@@ -49,7 +49,7 @@ void loop() {
         break;
       case RequestQueueMsg::MsgTypes::getVoltage: {
           // float response = RmsVoltageSensor::defaultInstance()->readVoltage(40);
-          float response = Ads1115Board::getInstance()->readRmsVoltage(0, 3);
+          float response = Ads1115Board::getInstance()->readRmsVoltage(0, 100);
           xQueueSend(responseQueue, &response, 0);
         }
         break;
@@ -63,9 +63,7 @@ void loop() {
         }
         break;
       case RequestQueueMsg::MsgTypes::clearHistory: {
-          // persistence.clear(); FIXME
-          float response = Ads1115Board::getInstance()->readRmsVoltage(0, 3);
-          Serial.printf("value:%f\n", response);
+          persistence.clear();
         }
         break;
       default:

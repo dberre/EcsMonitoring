@@ -11,8 +11,10 @@ TaskHandle_t Ads1115Board::_taskToNotifyFromISR = 0;
 Ads1115Board::Ads1115Board() {
   _board = new ADS1115(0x48);
 
-  pinMode(_alertInterruptPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(_alertInterruptPin), ISR_RMScallback, FALLING);
+  if (Wire.begin() == false) {
+    log_e("Failed to initialize Wire");
+  }
+  ESP_LOGE("", "");
 }
 
 Ads1115Board *Ads1115Board::getInstance() {
@@ -22,55 +24,128 @@ Ads1115Board *Ads1115Board::getInstance() {
   return _instance;
 }
 
+float Ads1115Board::readVoltage(uint channel, uint numberOfSamples) {
+
+  if(_board->begin() == false) {
+    log_e("Connection to ADS1115 failed");
+    return 0.0;
+  }
+
+  // range volts à définir (TODO)
+  _board->setGain(1);
+
+  // configure in single shot mode
+  _board->setMode(1);
+
+  int32_t sumAdc = 0;
+  unsigned long t0 = millis();
+
+  for(int i = 0; i < numberOfSamples; i++) {
+    _board->requestADC(channel);
+    int adc = _board->getValue();
+    sumAdc += adc;
+  }
+
+  unsigned long t1 = millis();
+  float rmsVoltage = (_board->getMaxVoltage() / 32767) * ((double)sumAdc / numberOfSamples);
+  Serial.printf("%d ADC; %.4f V; %.1f ms\n", sumAdc / numberOfSamples, rmsVoltage, ((double)(t1 - t0)/ numberOfSamples));
+
+  _board->reset();
+
+  return rmsVoltage;
+}
+
+float Ads1115Board::readRmsVoltageAlt(uint channel, uint numberOfSamples) {
+
+  if(_board->begin() == false) {
+    log_e("Connection to ADS1115 failed");
+    return 0.0;
+  }
+
+  // range volts à définir (TODO)
+  _board->setGain(1);
+
+  // configure in single shot mode
+  _board->setMode(1);
+
+  int32_t sumAdc = 0;
+  uint64_t sumSquareAdc = 0;
+  unsigned long t0 = millis();
+
+  for(int i = 0; i < numberOfSamples; i++) {
+    _board->requestADC_Differential_0_1();
+    int adc = _board->getValue();
+    sumAdc += adc;
+    sumSquareAdc += (adc * adc);
+  }
+  unsigned long t1 = millis();
+  double part1 = (double)(sumSquareAdc / numberOfSamples);
+  double part2 = pow((double)sumAdc / numberOfSamples, 2);
+  // float rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(((double)(sumSquareAdc / numberOfSamples)) - pow((double)sumAdc / numberOfSamples, 2)));
+  float rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(part1 - part2));
+  Serial.printf("%.0f ADC; %.0f ADC2; %.4f V; %.1f ms\n", part1, part2, rmsVoltage, ((double)(t1 - t0)/ numberOfSamples));
+
+  _board->reset();
+
+  return rmsVoltage;
+}
+
 float Ads1115Board::readRmsVoltage(uint channel, uint numberOfSamples) {
 
-  //_board->begin();
+  _taskToNotifyFromISR = xTaskGetCurrentTaskHandle();
+  pinMode(_alertInterruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(_alertInterruptPin), ISR_RMScallback, FALLING);
 
-  // range 6,144 volts
-  _board->setGain(0);
+  if(_board->begin() == false) {
+    log_e("Connection to ADS1115 failed");
+    return 0.0;
+  }
+
+  // range volts à définir (TODO)
+  _board->setGain(2);
 
   // set data rate to maximum (860 samples per second)
   _board->setDataRate(7);
 
   // configure to have the RDY signal after one conversion
-  //_board->setComparatorThresholdHigh(0x8000);
-  //_board->setComparatorThresholdLow(0x0000);
+  _board->setComparatorThresholdHigh(0x8000);
+  _board->setComparatorThresholdLow(0x0000);
   _board->setComparatorQueConvert(0);
 
   // start the continuous mode
-  _board->setMode(0);
+  _board->setMode(0);  // FIXME
 
   // flush any pending notification (interrupt remains active)
   while (ulTaskNotifyTake(pdTRUE, 0) > 0);
 
   // trigger the first read
-  //_board->requestADC(channel);
+  // _board->requestADC(channel);
+  _board->requestADC_Differential_0_1();
 
-  uint32_t sumAdc = 0;
-  uint32_t sumSquareAdc = 0;
+  int32_t sumAdc = 0;
+  uint64_t sumSquareAdc = 0;
   uint32_t samplesCount = 0;
   float rmsVoltage = 0.0;
 
-  _taskToNotifyFromISR = xTaskGetCurrentTaskHandle();
-
+  unsigned long t0 = millis(); 
   for(;;) {
     // block waiting for an interrupt event and leave in case of timeout
-    if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(10000)) == 0) break;
+    if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(100)) == 0) break;
 
-    // int adc = _board->getValue();
-    int adc = (samplesCount == 1 ? 4000 : 2000); // FIXME
+    int adc = _board->getValue();
     sumAdc += adc;
     sumSquareAdc += (adc * adc);
     samplesCount++;
-    ets_printf("loop %d\n", samplesCount);
 
     if (samplesCount == numberOfSamples) {
-      rmsVoltage = (_board->getMaxVoltage() / (1 << 16)) * sqrt(((double)sumSquareAdc / numberOfSamples) - pow((double)sumAdc / numberOfSamples, 2));
-      ets_printf("%d;%d;%d;%d\n", numberOfSamples, sumAdc, sumSquareAdc, (int32_t)(rmsVoltage * 1000));
+      rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(((double)(sumSquareAdc / numberOfSamples)) - pow((double)sumAdc / numberOfSamples, 2)));
+      Serial.printf("%d;%d;%ld;%f\n", numberOfSamples, sumAdc, sumSquareAdc, rmsVoltage);
       break;
     }
   }
+  ets_printf("ellapsed:%ld\n", millis() - t0);
 
+  detachInterrupt(_alertInterruptPin);
   _board->reset();
 
   return rmsVoltage;
@@ -78,8 +153,8 @@ float Ads1115Board::readRmsVoltage(uint channel, uint numberOfSamples) {
 
 // The ISR routine called when the ADC conversion is ready
 void Ads1115Board::ISR_RMScallback() {
-  // ets_printf("IRS_RMS\n");
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   vTaskNotifyGiveFromISR(_taskToNotifyFromISR, &xHigherPriorityTaskWoken);
+  // FIXME xHigherPriorityTaskWoken removed arg
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

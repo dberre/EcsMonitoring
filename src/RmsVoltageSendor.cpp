@@ -6,7 +6,7 @@
 RmsVoltageSensor *RmsVoltageSensor::_defaultInstance = 0;
 
 RmsVoltageSensor::RmsVoltageSensor() {
-    this->adcChannel = ADC1_CHANNEL_7;
+    this->adcChannel = ADC1_CHANNEL_4;
     // calculate conversion ratio (3.3v range for a 12 bits ADC)
     this->adcToVoltRatio = (float)(3.3 / (1 << 12));
 }
