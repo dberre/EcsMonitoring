@@ -10,11 +10,17 @@ TaskHandle_t Ads1115Board::_taskToNotifyFromISR = 0;
 
 Ads1115Board::Ads1115Board() {
   _board = new ADS1115(0x48);
+  #ifdef ESP32C3XIAO
+    // pin D1 on the board
+    _alertInterruptPin = 3;
+  #else 
+    // pin G33 on the board
+    _alertInterruptPin = 33;
+  #endif
 
   if (Wire.begin() == false) {
     log_e("Failed to initialize Wire");
   }
-  ESP_LOGE("", "");
 }
 
 Ads1115Board *Ads1115Board::getInstance() {
@@ -156,5 +162,9 @@ void Ads1115Board::ISR_RMScallback() {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   vTaskNotifyGiveFromISR(_taskToNotifyFromISR, &xHigherPriorityTaskWoken);
   // FIXME xHigherPriorityTaskWoken removed arg
-  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    #ifdef ESP32C3XIAO
+      portYIELD_FROM_ISR();
+    #else
+      portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    #endif
 }
