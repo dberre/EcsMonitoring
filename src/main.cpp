@@ -48,9 +48,8 @@ void loop() {
         }
         break;
       case RequestQueueMsg::MsgTypes::getVoltage: {
-          // float response = RmsVoltageSensor::defaultInstance()->readVoltage(40);
-          float response = Ads1115Board::getInstance()->readRmsVoltage(0, 100);
-          xQueueSend(responseQueue, &response, 0);
+          float vrms = Ads1115Board::getInstance()->readRmsVoltage(0, 100);
+          xQueueSend(responseQueue, &vrms, 0);
         }
         break;
       case RequestQueueMsg::MsgTypes::getHistory: {

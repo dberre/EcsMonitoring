@@ -19,6 +19,7 @@
                         document.getElementById("inputTemperature").innerHTML = obj.cold;
                         document.getElementById("outputTemperature").innerHTML = obj.hot;
                         document.getElementById("heaterState").innerHTML = obj.state;
+                        document.getElementById("powerConsumption").innerHTML = obj.power;
                     }
                 }
 
@@ -66,6 +67,10 @@
                 <tr>
                     <td>En chauffe:</td>
                     <td><span id="heaterState">-</span></td>
+                </tr>
+                <tr>
+                    <td>Puissance Consommée:</td>
+                    <td><span id="powerConsumption">-</span></td>
                 </tr>
             </table>
         </div>

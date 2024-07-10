@@ -149,11 +149,12 @@ MonitoringWebServer::MonitoringWebServer() {
                         strftime(date_string, 20, "%d/%m/%y %T", localtime(&(response.points[0].timestamp)));
                         
                         char jsonStr[100];
-                        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\" }",
+                        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\",\"power\":\"%.01f\" }",
                             date_string,
                             (float)response.points[0].coldTemperature / 10.0f,
                             (float)response.points[0].hotTemperature / 10.0f,
-                            response.points[0].heating ? "Oui" : "Non");
+                            response.points[0].heating ? "Oui" : "Non",
+                            response.points[0].power);
                         request->send(200, "application/json", String(jsonStr));
                         received = true;
                     }

@@ -8,7 +8,7 @@
 #include "WatchdogTimer.h"
 #include "MonitoringWebServer.h"
 #include "Queues.h"
-#include "VoltageSensor.h"
+#include "Ads1115Board.h"
 #include "TemperatureSensors.h"
 #include "Persistence.h"
 #include "DataPoint.h"
@@ -57,7 +57,6 @@ void setupUtils() {
   tzset();
 
   setupTemperatureSensors();
-  setupVoltageSensor();
   setupQueues();
 }
 
@@ -92,16 +91,26 @@ DataPoint makeMeasurement() {
   requestHotTemperature();
   newPoint.coldTemperature = (int16_t)(getColdTemperature() * 10.0f);
   newPoint.hotTemperature = (int16_t)(getHotTemperature() * 10.0f);
-  newPoint.heating = getHeaterState();
+  newPoint.power = getPowerConsumption();
+  // criteria is power > 50W (the output of a current clamp is noisy, checking > 0 would be incorrect) 
+  newPoint.heating = newPoint.power > 50.0;
   newPoint.timestamp = time(NULL);
   return newPoint;
 }
 
-bool getHeaterState() {
-    float voltage = RmsVoltageSensor::defaultInstance()->readVoltage(100);
-    return (voltage > 0.1);
+float getPowerConsumption() {
+  // make a measurement on 100 samples
+  float vrms = Ads1115Board::getInstance()->readRmsVoltage(0, 100);
 
-    // FIXME move elsewhere
+  // Ratio of the current transformer: 100A -> 0.050A
+  // burdern resistor = 150 ohms
+  // Irms = (Vrms / 150) * (100A / 0.05A) = Vrms * 13.3333
+  float currentA = 13.3333 * vrms;
+  
+  // Power (W) = Irms * 235V
+  float powerW = currentA * 235.0;
+
+  return powerW;
 }
 
 void saveMeasurement(DataPoint& point) {

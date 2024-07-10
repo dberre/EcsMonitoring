@@ -7,6 +7,7 @@ struct DataPoint {
     time_t timestamp = -1;
     int16_t coldTemperature = 0;
     int16_t hotTemperature = 0;
+    float power = 0.0;
     bool heating = false;
 };
 
