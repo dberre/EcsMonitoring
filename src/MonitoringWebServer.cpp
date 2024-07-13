@@ -183,7 +183,7 @@ MonitoringWebServer::MonitoringWebServer() {
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
                     char jsonStr[40];
-                    sprintf(jsonStr, "{ \"voltage\":\"%.03f\" }", response);
+                    sprintf(jsonStr, "{ \"voltage\":\"%.06f\" }", response);
                     request->send(200, "application/json", String(jsonStr));
                     received = true;
                 }

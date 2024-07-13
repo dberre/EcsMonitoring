@@ -1,8 +1,8 @@
 #include <OneWire.h>
 #include <DS18B20.h>
 
-#define COLD_SENSOR_PIN 32
-#define HOT_SENSOR_PIN  25
+#define COLD_SENSOR_PIN 4
+#define HOT_SENSOR_PIN  5
 
 OneWire coldSensorPin(COLD_SENSOR_PIN);
 OneWire hotSensorPin(HOT_SENSOR_PIN);

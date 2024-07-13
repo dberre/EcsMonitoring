@@ -16,9 +16,9 @@ private:
 public:
     static Ads1115Board *getInstance();
 
-    float readVoltage(uint channel, uint numberOfSamples);
-    float readRmsVoltage(uint channel, uint numberOfSamples);
-    float readRmsVoltageAlt(uint channel, uint numberOfSamples);
+    float readVoltage(uint channel, uint duration);
+    float readRmsVoltage(uint channel, uint duration);
+    float readRmsVoltageAlt(uint channel, uint duration);
 
     Ads1115Board(const Ads1115Board&) = delete;
     Ads1115Board& operator = (const Ads1115Board&) = delete;
