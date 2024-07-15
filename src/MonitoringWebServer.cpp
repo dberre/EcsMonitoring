@@ -86,19 +86,19 @@ MonitoringWebServer::MonitoringWebServer() {
                     request->send(500);
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-                    if (response.count > 0) {
+                    if (response.data.series.count > 0) {
                         String result = String();
                         char date_string[21];
                         char csvStr[100];
-                        for (int i = 0; i < response.count; i++) {
-                            DataPoint newPoint = response.points[i];
+                        for (int i = 0; i < response.data.series.count; i++) {
+                            DataPoint newPoint = response.data.series.points[i];
                             strftime(date_string, 20, "%d/%m/%y %T", localtime(&(newPoint.timestamp)));
                 
-                            sprintf(csvStr, "%s,%.01f,%.01f,%s\n",
+                            sprintf(csvStr, "%s,%.01f,%.01f,%.01f\n",
                                 date_string,
                                 (float)newPoint.coldTemperature / 10.0f,
                                 (float)newPoint.hotTemperature / 10.0f,
-                                newPoint.heating ? "Oui" : "Non");
+                                newPoint.power);
 
                             result.concat(csvStr);
                         }
@@ -107,7 +107,7 @@ MonitoringWebServer::MonitoringWebServer() {
                         // response is empty
                         request->send(500);
                     }
-                    delete(response.points);
+                    delete(response.data.series.points);
                     break;
                 }
             }
@@ -135,7 +135,7 @@ MonitoringWebServer::MonitoringWebServer() {
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
                     char jsonStr[40];
-                    sprintf(jsonStr, "{ \"historyDepth\":\"%d\" }", response.count);
+                    sprintf(jsonStr, "{ \"historyDepth\":\"%d\" }", response.data.series.count);
                     request->send(200, "application/json", String(jsonStr));
                     received = true;
                 }
@@ -171,21 +171,20 @@ MonitoringWebServer::MonitoringWebServer() {
                     request->send(500);
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-                    if (response.count == 1) {  
+                    if (response.data.series.count == 1) {  
                         char date_string[21];
-                        strftime(date_string, 20, "%d/%m/%y %T", localtime(&(response.points[0].timestamp)));
+                        strftime(date_string, 20, "%d/%m/%y %T", localtime(&(response.data.series.points[0].timestamp)));
                         
                         char jsonStr[100];
-                        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"state\":\"%s\",\"power\":\"%.01f\" }",
+                        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"power\":\"%.01f\" }",
                             date_string,
-                            (float)response.points[0].coldTemperature / 10.0f,
-                            (float)response.points[0].hotTemperature / 10.0f,
-                            response.points[0].heating ? "Oui" : "Non",
-                            response.points[0].power);
+                            (float)response.data.series.points[0].coldTemperature / 10.0f,
+                            (float)response.data.series.points[0].hotTemperature / 10.0f,
+                            response.data.series.points[0].power);
                         request->send(200, "application/json", String(jsonStr));
                         received = true;
                     }
-                    delete(response.points);
+                    delete(response.data.series.points);
                 }
             }
         } else {
@@ -200,7 +199,7 @@ MonitoringWebServer::MonitoringWebServer() {
 
         RequestQueueMsg req = GetVoltageRequest;
         if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
-            float response;
+            ResponseQueueMsg response;
             uint32_t t0 = millis();
             bool received = false;
             while (!received) {
@@ -210,7 +209,7 @@ MonitoringWebServer::MonitoringWebServer() {
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
                     char jsonStr[40];
-                    sprintf(jsonStr, "{ \"voltage\":\"%.06f\" }", response);
+                    sprintf(jsonStr, "{ \"voltage\":\"%.06f\" }", response.data.voltage);
                     request->send(200, "application/json", String(jsonStr));
                     received = true;
                 }

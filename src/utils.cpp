@@ -64,8 +64,8 @@ void setupForRTCWakeup() {
   Serial.println("setupForRTCWakeup");
   DataPoint newPoint = makeMeasurement();
   saveMeasurement(newPoint);
-  Serial.printf("RTC: %d\t%d\t%d\t%d\n",
-    newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, (newPoint.heating) ? 1 : 0);  
+  Serial.printf("RTC: %d\t%d\t%d\t%f\n",
+    newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, newPoint.power);  
   gotoSleep();
 }
 
@@ -77,8 +77,7 @@ void setupForUserWakeup() {
   acquisitionTimer->start();
 
   // watchdog to go to sleep mode after 120s of inactivity
-  // watchdogTimer = new WatchdogTimer(&watchdogCallback, 120000000ULL);
-   watchdogTimer = new WatchdogTimer(&watchdogCallback, 12000000000ULL);  // TODO very long timer for test purpose
+  watchdogTimer = new WatchdogTimer(&watchdogCallback, 120000000ULL);
 
   monitoringWebServer.start();
 }
@@ -92,8 +91,6 @@ DataPoint makeMeasurement() {
   newPoint.coldTemperature = (int16_t)(getColdTemperature() * 10.0f);
   newPoint.hotTemperature = (int16_t)(getHotTemperature() * 10.0f);
   newPoint.power = getPowerConsumption();
-  // criteria is power > 50W (the output of a current clamp is noisy, checking > 0 would be incorrect) 
-  newPoint.heating = newPoint.power > 50.0;
   newPoint.timestamp = time(NULL);
   return newPoint;
 }
@@ -137,7 +134,7 @@ void gotoSleep() {
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);
   #ifdef ESP32C3XIAO
-  esp_err_t status = esp_deep_sleep_enable_gpio_wakeup((1ULL << GPIO_NUM_2), ESP_GPIO_WAKEUP_GPIO_LOW);  // FIXME FOR XIAO
+  esp_err_t status = esp_deep_sleep_enable_gpio_wakeup((1ULL << GPIO_NUM_2), ESP_GPIO_WAKEUP_GPIO_LOW);
   Serial.println(status);
   #else
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
