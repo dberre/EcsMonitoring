@@ -13,12 +13,12 @@
                     if (this.readyState == 4 && this.status == 200) {
                         const obj = JSON.parse(this.responseText)
                         const voltage = Number(obj.voltage);
-                        document.getElementById("voltage").innerHTML = voltage.toFixed(3);
+                        document.getElementById("voltage").innerHTML = voltage.toFixed(4);
                         // I = (U / 150 ohms) * (100A / 0.050A)
                         const current = (voltage * 13.3333);
-                        document.getElementById("current").innerHTML = current.toFixed(3);
+                        document.getElementById("current").innerHTML = current.toFixed(4);
                         const power = (current * 235);
-                        document.getElementById("power").innerHTML = power.toFixed(0);
+                        document.getElementById("power").innerHTML = power.toFixed(1);
                     }
                 }
 

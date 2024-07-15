@@ -30,7 +30,7 @@ Ads1115Board *Ads1115Board::getInstance() {
   return _instance;
 }
 
-float Ads1115Board::readVoltage(uint channel, uint numberOfSamples) {
+float Ads1115Board::readVoltage(uint channel, uint duration) {
 
   if(_board->begin() == false) {
     log_e("Connection to ADS1115 failed");
@@ -44,24 +44,26 @@ float Ads1115Board::readVoltage(uint channel, uint numberOfSamples) {
   _board->setMode(1);
 
   int32_t sumAdc = 0;
-  unsigned long t0 = millis();
+  uint32_t numberOfSamples = 0;
+  unsigned long tend = millis() + duration;
 
-  for(int i = 0; i < numberOfSamples; i++) {
+  for(;;) {
     _board->requestADC(channel);
     int adc = _board->getValue();
     sumAdc += adc;
+    numberOfSamples++;
+    if (millis() > tend) break;
   }
 
-  unsigned long t1 = millis();
   float rmsVoltage = (_board->getMaxVoltage() / 32767) * ((double)sumAdc / numberOfSamples);
-  Serial.printf("%d ADC; %.4f V; %.1f ms\n", sumAdc / numberOfSamples, rmsVoltage, ((double)(t1 - t0)/ numberOfSamples));
+  Serial.printf("%d ADC; %.4f V\n", sumAdc / numberOfSamples, rmsVoltage);
 
   _board->reset();
 
   return rmsVoltage;
 }
 
-float Ads1115Board::readRmsVoltageAlt(uint channel, uint numberOfSamples) {
+float Ads1115Board::readRmsVoltageAlt(uint channel, uint duration) {
 
   if(_board->begin() == false) {
     log_e("Connection to ADS1115 failed");
@@ -76,27 +78,29 @@ float Ads1115Board::readRmsVoltageAlt(uint channel, uint numberOfSamples) {
 
   int32_t sumAdc = 0;
   uint64_t sumSquareAdc = 0;
-  unsigned long t0 = millis();
+  uint32_t numberOfSamples = 0;
+  unsigned long tend = millis() + duration;
 
-  for(int i = 0; i < numberOfSamples; i++) {
+  for(;;) {
     _board->requestADC_Differential_0_1();
     int adc = _board->getValue();
     sumAdc += adc;
     sumSquareAdc += (adc * adc);
+    numberOfSamples++;
   }
-  unsigned long t1 = millis();
+
   double part1 = (double)(sumSquareAdc / numberOfSamples);
   double part2 = pow((double)sumAdc / numberOfSamples, 2);
   // float rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(((double)(sumSquareAdc / numberOfSamples)) - pow((double)sumAdc / numberOfSamples, 2)));
   float rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(part1 - part2));
-  Serial.printf("%.0f ADC; %.0f ADC2; %.4f V; %.1f ms\n", part1, part2, rmsVoltage, ((double)(t1 - t0)/ numberOfSamples));
+  Serial.printf("%.0f ADC; %.0f ADC2; %.4f V\n", part1, part2, rmsVoltage);
 
   _board->reset();
 
   return rmsVoltage;
 }
 
-float Ads1115Board::readRmsVoltage(uint channel, uint numberOfSamples) {
+float Ads1115Board::readRmsVoltage(uint channel, uint duration) {
 
   _taskToNotifyFromISR = xTaskGetCurrentTaskHandle();
   pinMode(_alertInterruptPin, INPUT_PULLUP);
@@ -130,26 +134,29 @@ float Ads1115Board::readRmsVoltage(uint channel, uint numberOfSamples) {
 
   int32_t sumAdc = 0;
   uint64_t sumSquareAdc = 0;
-  uint32_t samplesCount = 0;
+  uint32_t numberOfSamples = 0;
   float rmsVoltage = 0.0;
 
-  unsigned long t0 = millis(); 
+  unsigned long tend = millis() + duration;
+  
   for(;;) {
     // block waiting for an interrupt event and leave in case of timeout
-    if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(100)) == 0) break;
+    if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(100)) == 0) {
+      log_e("Ads1115: timeout");
+      break;
+    }
 
     int adc = _board->getValue();
     sumAdc += adc;
     sumSquareAdc += (adc * adc);
-    samplesCount++;
+    numberOfSamples++;
 
-    if (samplesCount == numberOfSamples) {
+    if (millis() > tend) {
       rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(((double)(sumSquareAdc / numberOfSamples)) - pow((double)sumAdc / numberOfSamples, 2)));
       Serial.printf("%d;%d;%ld;%f\n", numberOfSamples, sumAdc, sumSquareAdc, rmsVoltage);
       break;
     }
   }
-  ets_printf("ellapsed:%ld\n", millis() - t0);
 
   detachInterrupt(_alertInterruptPin);
   _board->reset();

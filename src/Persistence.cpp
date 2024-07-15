@@ -62,20 +62,26 @@ int Persistence::getDataPoints(DataPoint *dataPoints, int nbToRead, int offset =
         }
         // the offset is now taken into account and must be 0 for the rest of the function
         offset = 0;
+    } else {
+        offset -= dataCursor_;
     }
     int nbRead = nbToRead - stillToRead;
     
     // if more points are needed then get them from the file
     if (stillToRead > 0) {
         File file = SPIFFS.open(dataFilename, "rb");
-        
-        // clamp count to remain within the file bounds
-        if ((stillToRead + offset) * sizeof(DataPoint) > file.available()) {
-            stillToRead = file.available() / sizeof(DataPoint) - offset;
+        file.seek(0, SeekMode::SeekEnd);
+        // file.position() points to just after the last written byte
+        size_t recordsCount = file.position() / sizeof(DataPoint);
+        file.seek(0, SeekMode::SeekSet);
+
+        // truncation to remain within the file bounds
+        if ((stillToRead + offset) > recordsCount) {
+            stillToRead = recordsCount - offset;
         }
         nbRead += stillToRead;
 
-        uint32_t position = file.available() - (offset + 1) * sizeof(DataPoint);
+        uint32_t position = (recordsCount - offset - 1) * sizeof(DataPoint);
         for (int i = 0; i < stillToRead; i++) {
             file.seek(position);
             file.read((uint8_t *)dataPtr, sizeof(DataPoint));
@@ -85,6 +91,15 @@ int Persistence::getDataPoints(DataPoint *dataPoints, int nbToRead, int offset =
         file.close();
     }
     return nbRead;
+}
+
+int Persistence::getDataPointsCount() {
+    File file = SPIFFS.open(dataFilename, "rb");
+    file.seek(0, SeekMode::SeekEnd);
+    // file.position() points to just after the last written byte
+    size_t recordsCount = file.position() / sizeof(DataPoint);
+    file.close();
+    return recordsCount + dataCursor_;
 }
 
 void Persistence::clear() {

@@ -51,18 +51,38 @@
                 fillTable();
             }
 
-            function pagePlus() {
+            function pageDown() {
                 setPageOffset(getPageOffset() + getPageSize());
                 fillTable();
             }
 
-            function pageMinus() {
+            function pageUp() {
                 var pageOffset = getPageOffset() - getPageSize();
                 if (pageOffset < 0) {
                     pageOffset = 0;
                 }
                 setPageOffset(pageOffset);
                 fillTable();
+            }
+
+            function firstPage() {
+                setPageOffset(0);
+                fillTable();
+            }
+
+            function lastPage() {
+                var xhttp = new XMLHttpRequest();
+        
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        const obj = JSON.parse(this.responseText)
+                        let depth = Number(obj.historyDepth);
+                        setPageOffset(depth - getPageSize());
+                        fillTable();
+                    } 
+                }
+                xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/historyDepth`, true);
+                xhttp.send();
             }
 
             function fillTable() {
@@ -74,10 +94,8 @@
                 xhttp.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
                         let rows = this.responseText.split("\n");
-                        console.log(rows)
                         for (let row of rows) {
                             let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
-                            console.log(cols)
                             if (cols != null) {
                                 let tr = table.insertRow();
                                 for (let col of cols) {
@@ -89,7 +107,7 @@
                     }
                 }
 
-                xhttp.open("GET", `http://192.168.4.22/history?count=${getPageSize()}&offset=${getPageOffset()}` , true);
+                xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/history?count=${getPageSize()}&offset=${getPageOffset()}` , true);
                 xhttp.send();
             }
 
@@ -107,13 +125,26 @@
                 <input type="number", id="inputPageSize", name="inputPageSize", value="10" min="10", max="60"/>
                 <label for="inputPageOffset">Offset</label>
                 <input type="number", id="inputPageOffset", name="inputPageOffset", value="0 "min="0", max="64000"/>
-                <button onclick="pagePlus()">PgDown</button>
-                <button onclick="pageMinus()">PgUp</button>              
+                <button onclick="pageDown()">
+                    <p>&#x21e9;</p>
+                </button>
+                <button onclick="pageUp()">
+                    <p>&#x21e7;</p>
+                </button>
+                <button onclick="lastPage()">
+                    <p>&#x2913;</p>
+                </button>
+                <button onclick="firstPage()">
+                    <p>&#x2912;</p>
+                </button>
         	</div>
         </div>
         <br>
         <div class="scroll-container">
             <table id="table"></table>
+        </div>
+        <div class="w3-padding-24 w3-center">
+            <button onClick="window.location.href='/'"  class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Menu principal</button>
         </div>
     </body>
 </html>

@@ -55,3 +55,36 @@ function downloadFile(urlToSend) {
 
     req.send();
 }
+
+function downloadHistoryButton() {
+
+    xhttp = new XMLHttpRequest();
+    xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/historyDepth`, false);
+    xhttp.send();
+
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+        const obj = JSON.parse(xhttp.responseText)
+        let recordsCount = Number(obj.historyDepth);
+
+        xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/history?count=${recordsCount}&offset=0`, false);
+        xhttp.send();
+
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+            // Create a Blob with the CSV data and type
+            const blob = new Blob([["Date,Sonde1 (°C),Sonde2 (°C),Chauffe", xhttp.responseText].join('\n')], { type: 'text/csv' });
+
+            // Create a URL for the Blob
+            const url = URL.createObjectURL(blob);
+
+            // Create an anchor tag for downloading
+            const a = document.createElement('a');
+
+            // Set the URL and download attribute of the anchor tag
+            a.href = url;
+            a.download = 'download.csv';
+
+            // Trigger the download by clicking the anchor tag
+            a.click();
+        }
+    }
+}

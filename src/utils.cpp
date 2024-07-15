@@ -137,7 +137,8 @@ void gotoSleep() {
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);
   #ifdef ESP32C3XIAO
-  esp_deep_sleep_enable_gpio_wakeup(GPIO_NUM_13, ESP_GPIO_WAKEUP_GPIO_LOW);  // FIXME FOR XIAO
+  esp_err_t status = esp_deep_sleep_enable_gpio_wakeup((1ULL << GPIO_NUM_2), ESP_GPIO_WAKEUP_GPIO_LOW);  // FIXME FOR XIAO
+  Serial.println(status);
   #else
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
   #endif

@@ -119,6 +119,33 @@ MonitoringWebServer::MonitoringWebServer() {
         watchdogTimer->restart();
     });
 
+    server->on("/historyDepth", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /historyDepth");
+        watchdogTimer->restart();
+
+        RequestQueueMsg req = GetHistoryDepth();
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
+            ResponseQueueMsg response;
+            uint32_t t0 = millis();
+            bool received = false;
+            while (!received) {
+                if ((millis() - t0) > 1000) {
+                    // time out, no response received
+                    request->send(500);
+                    break;
+                } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+                    char jsonStr[40];
+                    sprintf(jsonStr, "{ \"historyDepth\":\"%d\" }", response.count);
+                    request->send(200, "application/json", String(jsonStr));
+                    received = true;
+                }
+            }
+        } else {
+            // the queue is full, can't send the request
+            request->send(500);
+        }
+    });
+
     server->on("/clearHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /clearHistory");
         RequestQueueMsg req = ClearHistoryRequest;
@@ -183,7 +210,7 @@ MonitoringWebServer::MonitoringWebServer() {
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
                     char jsonStr[40];
-                    sprintf(jsonStr, "{ \"voltage\":\"%.03f\" }", response);
+                    sprintf(jsonStr, "{ \"voltage\":\"%.06f\" }", response);
                     request->send(200, "application/json", String(jsonStr));
                     received = true;
                 }
