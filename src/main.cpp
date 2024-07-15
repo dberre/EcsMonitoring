@@ -61,6 +61,13 @@ void loop() {
           xQueueSend(responseQueue, &response, 0);
         }
         break;
+      case RequestQueueMsg::MsgTypes::getHistoryDepth: {
+          ResponseQueueMsg response;
+          response.points = 0;
+          response.count = persistence.getDataPointsCount();;
+          xQueueSend(responseQueue, &response, 0);
+        }
+        break;
       case RequestQueueMsg::MsgTypes::clearHistory: {
           persistence.clear();
         }

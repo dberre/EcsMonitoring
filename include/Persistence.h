@@ -11,6 +11,7 @@ class Persistence {
     void addDataPoint(DataPoint& dataPoint);
     DataPoint getLastDataPoint();
     int getDataPoints(DataPoint *dataPoints, int count, int offset);
+    int getDataPointsCount();
     void clear();
     
     private:
