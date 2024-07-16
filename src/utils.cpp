@@ -135,9 +135,10 @@ void gotoSleep() {
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);
   #ifdef ESP32C3XIAO
   esp_err_t status = esp_deep_sleep_enable_gpio_wakeup((1ULL << GPIO_NUM_2), ESP_GPIO_WAKEUP_GPIO_LOW);
-  Serial.println(status);
   #else
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_13, 1);
+  // will wake if a low level occurs on pin G33
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_33, 0);
+  pinMode(GPIO_NUM_33, INPUT_PULLUP);
   #endif
   esp_deep_sleep_start();
 }
