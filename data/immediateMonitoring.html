@@ -18,8 +18,10 @@
                         document.getElementById("dateTime").innerHTML = obj.time;
                         document.getElementById("inputTemperature").innerHTML = obj.cold;
                         document.getElementById("outputTemperature").innerHTML = obj.hot;
-                        document.getElementById("heaterState").innerHTML = obj.state;
                         document.getElementById("powerConsumption").innerHTML = obj.power;
+                        let power = Number(obj.power);
+                        // Fixme criteria is power > 10W 
+                        document.getElementById("heaterState").innerHTML = (power > 10) ? "Oui" : "Non";
                     }
                 }
 

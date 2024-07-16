@@ -18,8 +18,8 @@ RequestQueueMsg::RequestQueueMsg(MsgTypes type, int count, int offset) {
 }
 
 ResponseQueueMsg::ResponseQueueMsg() {
-    this->count = 0;
-    this->points = NULL;
+    this->data.series.count = 0;
+    this->data.series.points = NULL;
 }
 
 QueueHandle_t requestQueue;

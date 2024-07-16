@@ -19,8 +19,14 @@ struct RequestQueueMsg {
 struct ResponseQueueMsg {
     ResponseQueueMsg();
 
-    int count;
-    DataPoint *points;
+    union {
+        struct {
+            int count;
+            DataPoint *points;
+        } series;
+
+        float voltage;
+    } data;
 };
 
 #define TrigMeasurementRequest RequestQueueMsg(RequestQueueMsg::MsgTypes::trigMeasurement)

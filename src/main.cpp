@@ -35,36 +35,38 @@ void loop() {
           saveMeasurement(newPoint);
           acquisitionTimer->start();
           Serial.printf("loop: %d\t%d\t%d\t%d\n", 
-            newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, (newPoint.heating) ? 1 : 0);
+            newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, newPoint.power);
         }
         break;
       case RequestQueueMsg::MsgTypes::getMeasurement: {
           DataPoint newPoint = makeMeasurement();
           ResponseQueueMsg response;
-          response.count = 1;
-          response.points = new DataPoint[1];
-          response.points[0] = newPoint;
+          response.data.series.count = 1;
+          response.data.series.points = new DataPoint[1];
+          response.data.series.points[0] = newPoint;
           xQueueSend(responseQueue, &response, 0);
         }
         break;
       case RequestQueueMsg::MsgTypes::getVoltage: {
           float vrms = Ads1115Board::getInstance()->readRmsVoltage(0, 100);
-          xQueueSend(responseQueue, &vrms, 0);
+          ResponseQueueMsg response;
+          response.data.voltage = vrms;
+          xQueueSend(responseQueue, &response, 0);
         }
         break;
       case RequestQueueMsg::MsgTypes::getHistory: {
           int count = msgQueue.args[0];
           int offset = msgQueue.args[1];
           ResponseQueueMsg response;
-          response.points = new DataPoint[count];
-          response.count = persistence.getDataPoints(response.points, count, offset);
+          response.data.series.points = new DataPoint[count];
+          response.data.series.count = persistence.getDataPoints(response.data.series.points, count, offset);
           xQueueSend(responseQueue, &response, 0);
         }
         break;
       case RequestQueueMsg::MsgTypes::getHistoryDepth: {
           ResponseQueueMsg response;
-          response.points = 0;
-          response.count = persistence.getDataPointsCount();;
+          response.data.series.points = 0;
+          response.data.series.count = persistence.getDataPointsCount();
           xQueueSend(responseQueue, &response, 0);
         }
         break;
