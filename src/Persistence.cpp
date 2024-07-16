@@ -48,10 +48,11 @@ void Persistence::saveToFile() {
 }
 
 int Persistence::getDataPoints(DataPoint *dataPoints, int nbToRead, int offset = 0) {
-    // take the points available in the local storage
+
     int stillToRead = nbToRead;
     DataPoint *dataPtr = dataPoints;
 
+    // get the points available in the local storage
     int index = dataCursor_ - 1 - offset;
     if (index >= 0) {
         while ((index >= 0) && (stillToRead > 0)) {
