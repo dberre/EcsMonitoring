@@ -6,12 +6,26 @@
         <link rel="stylesheet" type="text/css" href="w3.css">
         <script type="text/javascript" src="script.js"></script>
         <script>
+            var powerThreshold = 10;
+
+            window.onload = () => {
+                var xhttp = new XMLHttpRequest();
+                
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        const obj = JSON.parse(this.responseText)
+                        powerThreshold = Number(obj.powerThreshold);
+                    }
+                }
+
+                xhttp.open("GET", "getPreferences", true);
+                xhttp.send();
+            }
+
             setInterval(function getData() {
                 var xhttp = new XMLHttpRequest();
                 
                 xhttp.onreadystatechange = function() {
-                    console.log(this.readyState);
-                    console.log(this.responseText);
                     if (this.readyState == 4 && this.status == 200) {
                         console.log(this.responseText);
                         const obj = JSON.parse(this.responseText)
@@ -20,8 +34,7 @@
                         document.getElementById("outputTemperature").innerHTML = obj.hot;
                         document.getElementById("powerConsumption").innerHTML = obj.power;
                         let power = Number(obj.power);
-                        // Fixme criteria is power > 10W 
-                        document.getElementById("heaterState").innerHTML = (power > 10) ? "Oui" : "Non";
+                        document.getElementById("heaterState").innerHTML = (power > powerThreshold) ? "Oui" : "Non";
                     }
                 }
 
@@ -80,7 +93,6 @@
         <div class="w3-padding-24 w3-center">
             <button onClick="window.location.href='/'"  class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Menu principal</button>
         </div>
-
     </body>
 
 </html>

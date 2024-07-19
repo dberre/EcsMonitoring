@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <title>ECS monitoring preferences</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
+    <link rel="stylesheet" type="text/css" href="w3.css">
+    <script type="text/javascript" src="script.js"></script>
+    <script>
+        window.onload = () => {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    const obj = JSON.parse(this.responseText);
+                    document.getElementById("pageSize").value = Number(obj.pageSize);
+                    document.getElementById("powerThreshold").value = Number(obj.powerThreshold);
+                }
+            }
+            xhttp.open("GET", "getPreferences", true);
+            xhttp.send();
+        }
+
+        function savePreferences() {
+            let pageSize = Number(document.getElementById("pageSize").value);
+            let powerThreshold = Number(document.getElementById("powerThreshold").value);
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", `${window.location.protocol}//${window.location.hostname}/setPreferences`);
+            xhttp.onload = () => console.log(xhttp.status);  // TODO
+           let jsonString = `{\"pageSize\":\"${pageSize}\",\"powerThreshold\":\"${powerThreshold}\"}`;
+            xhttp.send(jsonString);
+        }
+    </script>
+</head>
+
+    <form>
+        <label for="pageSize">Number of rows on the history page:</label><br>
+        <input type="text" id="pageSize" name="pageSize" value="10"><br>
+        <label for="powerThreshold">Heating detection threshold (W):</label><br>
+        <input type="text" id="powerThreshold" name="powerThreshold" value="10">
+        <br><br>
+        <button type="button" onclick="savePreferences()">Sauver</button>
+        <br>
+        <button type="button" onclick="window.location.href='/'">Retourner au menu</button>
+    </form>
+</html>
