@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "Queues.h"
 #include "DataPoint.h"
+#include "ApplicationSettings.h"
 
 MonitoringWebServer::MonitoringWebServer() {
     server = new AsyncWebServer(80);
@@ -31,6 +32,12 @@ MonitoringWebServer::MonitoringWebServer() {
     server->on("/historizedMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /historizedMonitoring");
         request->send(SPIFFS, "/historizedMonitoring.html", "text/html");
+        watchdogTimer->restart();
+    });
+
+    server->on("/preferences", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /preferences");
+        request->send(SPIFFS, "/preferences.html", "text/html");
         watchdogTimer->restart();
     });
     
@@ -221,7 +228,7 @@ MonitoringWebServer::MonitoringWebServer() {
     });
 
     server->on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.printf("server: /setTime\n");
+        Serial.println("server: /setTime");
 
         if (request->hasParam("timeEpoch")) {
             String param = request->getParam("timeEpoch")->value();
@@ -240,6 +247,27 @@ MonitoringWebServer::MonitoringWebServer() {
             request->send(500);
         }
         watchdogTimer->restart();
+    });
+
+    server->on("/getPreferences", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /getPreferences");
+        watchdogTimer->restart();
+        String response = ApplicationSettings::instance()->getJSON();
+        request->send(200, "application/json", response);
+    });
+
+    server->onRequestBody([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+        Serial.println("server: onRequestBody");
+
+        // TODO check if it is safe to use the data buffer which is not null terminated
+        // TODO more robust way to parse this simple JSON w/o using a lib
+        // parse JSON {"pageSize":"20","powerThreshold":"10"}
+        int pageSize, powerThreshold;
+        if (2 == sscanf((const char *)data, "{\"pageSize\":\"%d\",\"powerThreshold\":\"%d", &pageSize, &powerThreshold)) {
+            ApplicationSettings::instance()->setPageSize(pageSize);
+            ApplicationSettings::instance()->setPowerThreshold(powerThreshold);
+            request->send(200, "text/plain", "true");
+        }
     });
 }
 
