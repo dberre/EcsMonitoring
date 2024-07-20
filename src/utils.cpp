@@ -12,7 +12,7 @@
 #include "TemperatureSensors.h"
 #include "Persistence.h"
 #include "DataPoint.h"
-#include "RmsVoltageSensor.h"
+#include "ApplicationSettings.h"
 
 Persistence persistence;
 
@@ -88,9 +88,9 @@ DataPoint makeMeasurement() {
   // each is 675 ms, so finally 675ms for both when done in parallel
   requestColdTemperature();
   requestHotTemperature();
-  newPoint.coldTemperature = (int16_t)(getColdTemperature() * 10.0f);
-  newPoint.hotTemperature = (int16_t)(getHotTemperature() * 10.0f);
-  newPoint.power = getPowerConsumption();
+  newPoint.coldTemperature = (ApplicationSettings::instance()->getColdSensorPresence()) ? (int16_t)(getColdTemperature() * 10.0f) : 0;
+  newPoint.hotTemperature = (ApplicationSettings::instance()->getHotSensorPresence()) ? (int16_t)(getHotTemperature() * 10.0f) : 0;
+  newPoint.power = (ApplicationSettings::instance()->getVoltageSensorPresence()) ? getPowerConsumption() : 0.0;
   newPoint.timestamp = time(NULL);
   return newPoint;
 }
