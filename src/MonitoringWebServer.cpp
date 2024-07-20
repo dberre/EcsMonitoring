@@ -93,7 +93,7 @@ MonitoringWebServer::MonitoringWebServer() {
                     request->send(500);
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-                    if (response.data.series.count > 0) {
+                    if (response.msgType == ResponseQueueMsg::MsgType::series) {
                         String result = String();
                         char date_string[21];
                         char csvStr[100];
@@ -110,12 +110,9 @@ MonitoringWebServer::MonitoringWebServer() {
                             result.concat(csvStr);
                         }
                         request->send(200, "text/plain", result);
-                    } else {
-                        // response is empty
-                        request->send(500);
-                    }
-                    delete(response.data.series.points);
-                    break;
+                        delete(response.data.series.points);
+                        break;
+                    } 
                 }
             }
         } else {
@@ -130,7 +127,7 @@ MonitoringWebServer::MonitoringWebServer() {
         Serial.println("server: /historyDepth");
         watchdogTimer->restart();
 
-        RequestQueueMsg req = GetHistoryDepth();
+        RequestQueueMsg req = GetHistoryDepth;
         if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
             ResponseQueueMsg response;
             uint32_t t0 = millis();
@@ -141,10 +138,12 @@ MonitoringWebServer::MonitoringWebServer() {
                     request->send(500);
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-                    char jsonStr[40];
-                    sprintf(jsonStr, "{ \"historyDepth\":\"%d\" }", response.data.series.count);
-                    request->send(200, "application/json", String(jsonStr));
-                    received = true;
+                    if (response.msgType == ResponseQueueMsg::MsgType::series) {
+                        char jsonStr[40];
+                        sprintf(jsonStr, "{\"historyDepth\":%d}", response.data.series.count);
+                        request->send(200, "application/json", String(jsonStr));
+                        received = true;
+                    }
                 }
             }
         } else {
@@ -178,20 +177,22 @@ MonitoringWebServer::MonitoringWebServer() {
                     request->send(500);
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-                    if (response.data.series.count == 1) {  
-                        char date_string[21];
-                        strftime(date_string, 20, "%d/%m/%y %T", localtime(&(response.data.series.points[0].timestamp)));
-                        
-                        char jsonStr[100];
-                        sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":\"%.01f\",\"hot\":\"%.01f\",\"power\":\"%.01f\" }",
-                            date_string,
-                            (float)response.data.series.points[0].coldTemperature / 10.0f,
-                            (float)response.data.series.points[0].hotTemperature / 10.0f,
-                            response.data.series.points[0].power);
-                        request->send(200, "application/json", String(jsonStr));
-                        received = true;
+                    if (response.msgType == ResponseQueueMsg::MsgType::series) {
+                        if (response.data.series.count == 1) {  
+                            char date_string[21];
+                            strftime(date_string, 20, "%d/%m/%y %T", localtime(&(response.data.series.points[0].timestamp)));
+                            
+                            char jsonStr[100];
+                            sprintf(jsonStr, "{ \"time\":\"%s\",\"cold\":%.01f,\"hot\":%.01f,\"power\":%.01f }",
+                                date_string,
+                                (float)response.data.series.points[0].coldTemperature / 10.0f,
+                                (float)response.data.series.points[0].hotTemperature / 10.0f,
+                                response.data.series.points[0].power);
+                            request->send(200, "application/json", String(jsonStr));
+                            received = true;
+                        }
+                        delete(response.data.series.points);
                     }
-                    delete(response.data.series.points);
                 }
             }
         } else {
@@ -215,10 +216,12 @@ MonitoringWebServer::MonitoringWebServer() {
                     request->send(500);
                     break;
                 } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-                    char jsonStr[40];
-                    sprintf(jsonStr, "{ \"voltage\":\"%.06f\" }", response.data.voltage);
-                    request->send(200, "application/json", String(jsonStr));
-                    received = true;
+                    if (response.msgType == ResponseQueueMsg::MsgType::voltage) {
+                        char jsonStr[40];
+                        sprintf(jsonStr, "{\"voltage\":%.06f}", response.data.voltage);
+                        request->send(200, "application/json", String(jsonStr));
+                        received = true;
+                    }
                 }
             }
         } else {
@@ -239,7 +242,7 @@ MonitoringWebServer::MonitoringWebServer() {
             
             char date_string[21];
             time_t now = time(NULL);
-            strftime(date_string, 20, "%d/%m/%y %T", localtime(&now));
+            strftime(date_string, 20, "%d/%m/%y %T", localtime(&now)); // FIXME remove
             Serial.printf("received:%d set:%s\n", param.toInt(), date_string);
 
             request->send(200, "application/json", String("{\"timeEpoch\":") + String(now) + String("}"));
@@ -256,18 +259,23 @@ MonitoringWebServer::MonitoringWebServer() {
         request->send(200, "application/json", response);
     });
 
+    server->on("/flush", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /flush");
+        watchdogTimer->restart();
+
+        ResponseQueueMsg response;
+        while (xQueueReceive(responseQueue, &response, 1 / portTICK_PERIOD_MS) == pdTRUE) {
+            Serial.printf("/fush %d\n", response.msgType);
+        }
+        request->send(200);
+    });
+
     server->onRequestBody([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
         Serial.println("server: onRequestBody");
 
-        // TODO check if it is safe to use the data buffer which is not null terminated
-        // TODO more robust way to parse this simple JSON w/o using a lib
-        // parse JSON {"pageSize":"20","powerThreshold":"10"}
-        int pageSize, powerThreshold;
-        if (2 == sscanf((const char *)data, "{\"pageSize\":\"%d\",\"powerThreshold\":\"%d", &pageSize, &powerThreshold)) {
-            ApplicationSettings::instance()->setPageSize(pageSize);
-            ApplicationSettings::instance()->setPowerThreshold(powerThreshold);
-            request->send(200, "text/plain", "true");
-        }
+        char *jsonTxt = strndup((const char*)data, len);
+        ApplicationSettings::instance()->parseJSON(jsonTxt);
+        free(jsonTxt);
     });
 }
 

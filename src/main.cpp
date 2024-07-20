@@ -34,13 +34,14 @@ void loop() {
           DataPoint newPoint = makeMeasurement();
           saveMeasurement(newPoint);
           acquisitionTimer->start();
-          Serial.printf("loop: %d\t%d\t%d\t%d\n", 
+          Serial.printf("trigMeasurement: %d\t%d\t%d\t%d\n", 
             newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, newPoint.power);
         }
         break;
       case RequestQueueMsg::MsgTypes::getMeasurement: {
           DataPoint newPoint = makeMeasurement();
           ResponseQueueMsg response;
+          response.msgType = ResponseQueueMsg::MsgType::series;
           response.data.series.count = 1;
           response.data.series.points = new DataPoint[1];
           response.data.series.points[0] = newPoint;
@@ -50,6 +51,7 @@ void loop() {
       case RequestQueueMsg::MsgTypes::getVoltage: {
           float vrms = Ads1115Board::getInstance()->readRmsVoltage(0, 100);
           ResponseQueueMsg response;
+          response.msgType = ResponseQueueMsg::MsgType::voltage;
           response.data.voltage = vrms;
           xQueueSend(responseQueue, &response, 0);
         }
@@ -58,6 +60,7 @@ void loop() {
           int count = msgQueue.args[0];
           int offset = msgQueue.args[1];
           ResponseQueueMsg response;
+          response.msgType = ResponseQueueMsg::MsgType::series;
           response.data.series.points = new DataPoint[count];
           response.data.series.count = persistence.getDataPoints(response.data.series.points, count, offset);
           xQueueSend(responseQueue, &response, 0);
@@ -65,6 +68,7 @@ void loop() {
         break;
       case RequestQueueMsg::MsgTypes::getHistoryDepth: {
           ResponseQueueMsg response;
+          response.msgType = ResponseQueueMsg::MsgType::series;
           response.data.series.points = 0;
           response.data.series.count = persistence.getDataPointsCount();
           xQueueSend(responseQueue, &response, 0);
