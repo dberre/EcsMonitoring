@@ -25,7 +25,7 @@ WatchdogTimer *watchdogTimer = NULL;
 void makeMeasurementCallback(void *args) {
   ets_printf("ISR\n");
   RequestQueueMsg req = TrigMeasurementRequest;
-  xQueueSend(requestQueue, &req, 0);
+  xQueueSendFromISR(requestQueue, &req, 0);
 }
 
 void watchdogCallback(void *args) {

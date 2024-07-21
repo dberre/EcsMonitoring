@@ -276,6 +276,7 @@ MonitoringWebServer::MonitoringWebServer() {
         char *jsonTxt = strndup((const char*)data, len);
         ApplicationSettings::instance()->parseJSON(jsonTxt);
         free(jsonTxt);
+        request->send(200);
     });
 }
 
