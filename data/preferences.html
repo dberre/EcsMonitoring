@@ -29,12 +29,14 @@
             let coldSensorPresence = (document.getElementById("coldSensorPresence").checked) ? 1 : 0;
             let hotSensorPresence = (document.getElementById("hotSensorPresence").checked) ? 1 : 0;
             let voltageSensorPresence = (document.getElementById("voltageSensorPresence").checked) ? 1 : 0;
-            var xhttp = new XMLHttpRequest();
-            xhttp.open("POST", `${window.location.protocol}//${window.location.hostname}/setPreferences`);
-            xhttp.onload = () => console.log(xhttp.status);  // TODO
+
             let jsonObject = {"pageSize":pageSize,"powerThreshold":powerThreshold,"coldSensorPresence":coldSensorPresence,"hotSensorPresence":hotSensorPresence,"voltageSensorPresence":voltageSensorPresence};
-            let jsonString = JSON.stringify(jsonObject);
-            xhttp.send(jsonString);
+            
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", `${window.location.protocol}//${window.location.hostname}`);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            xhttp.onload = () => console.log(xhttp.status);  // TODO feedback ?
+            xhttp.send(JSON.stringify(jsonObject));
         }
     </script>
 </head>

@@ -49,11 +49,11 @@ bool ApplicationSettings::parseJSON(char *jsonTxt) {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, (const char*)jsonTxt);
     if (error == DeserializationError::Ok) {
-        this->setPageSize(doc["pageSize"] | 10);
-        this->setPowerThreshold(doc["powerThreshold"] | 10);
-        this->setColdSensorPresence((doc["coldSensorPresence"] | 0) == 1);
-        this->setHotSensorPresence((doc["hotSensorPresence"] | 0) == 1);
-        this->setVoltageSensorPresence((doc["voltageSensorPresence"] | 0) == 1);
+        if (doc.containsKey("pageSize")) this->setPageSize(doc["pageSize"]);
+        if (doc.containsKey("powerThreshold")) this->setPowerThreshold(doc["powerThreshold"]);
+        if (doc.containsKey("coldSensorPresence")) this->setColdSensorPresence(doc["coldSensorPresence"] == 1);
+        if (doc.containsKey("hotSensorPresence")) this->setHotSensorPresence(doc["hotSensorPresence"] == 1);
+        if (doc.containsKey("voltageSensorPresence")) this->setVoltageSensorPresence(doc["voltageSensorPresence"] == 1);
         return true;
     }
     return false;
