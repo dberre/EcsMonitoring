@@ -81,7 +81,7 @@
                         fillTable();
                     } 
                 }
-                xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/historyDepth`, true);
+                xhttp.open("GET", `historyDepth`, true);
                 xhttp.send();
             }
 
@@ -126,7 +126,7 @@
                     }
                 }
 
-                xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/history?count=${getPageSize()}&offset=${getPageOffset()}` , true);
+                xhttp.open("GET", `history?count=${getPageSize()}&offset=${getPageOffset()}` , true);
                 xhttp.send();
             }
         </script>

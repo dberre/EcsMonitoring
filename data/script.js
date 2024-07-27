@@ -1,24 +1,7 @@
-function immediateMonitoringButton() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("GET", "immediateMonitoring", true);
-    xhttp.send();
-}
-
-function historizedMonitoringButton() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("GET", "historizedMonitoring", true);
-    xhttp.send();
-}
 
 function gotoSleepButton() {
     var xhttp = new XMLHttpRequest();
     xhttp.open("GET", "gotoSleep", true);
-    xhttp.send();
-}
-
-function backHomeButton() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("GET", "", true);
     xhttp.send();
 }
 
@@ -58,14 +41,14 @@ function downloadFile(urlToSend) {
 function downloadHistoryButton() {
 
     xhttp = new XMLHttpRequest();
-    xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/historyDepth`, false);
+    xhttp.open("GET", `historyDepth`, false);
     xhttp.send();
 
     if (xhttp.readyState == 4 && xhttp.status == 200) {
         const obj = JSON.parse(xhttp.responseText)
         let recordsCount = Number(obj.historyDepth);
 
-        xhttp.open("GET", `${window.location.protocol}//${window.location.hostname}/history?count=${recordsCount}&offset=0`, false);
+        xhttp.open("GET", `history?count=${recordsCount}&offset=0`, false);
         xhttp.send();
 
         if (xhttp.readyState == 4 && xhttp.status == 200) {
