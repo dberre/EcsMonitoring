@@ -69,7 +69,7 @@ MonitoringWebServer::MonitoringWebServer() {
     });
 
     server->on("/history", HTTP_GET, [](AsyncWebServerRequest *request) {      
-        int count = 1;
+        int count = 10;
         if (request->hasParam("count")) {
             count = request->getParam("count")->value().toInt();
         }
@@ -247,7 +247,7 @@ MonitoringWebServer::MonitoringWebServer() {
 
             request->send(200, "application/json", String("{\"timeEpoch\":") + String(now) + String("}"));
         } else {
-            request->send(500);
+            request->send(400);
         }
         watchdogTimer->restart();
     });
@@ -272,10 +272,15 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->onRequestBody([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
         Serial.println("server: onRequestBody");
+        // example for testing:  curl -i -d '{"voltageSensorPresence":1}' -H "Content-Type: application/json" -X POST http://192.168.4.22
 
         char *jsonTxt = strndup((const char*)data, len);
-        ApplicationSettings::instance()->parseJSON(jsonTxt);
-        free(jsonTxt);
+        if (ApplicationSettings::instance()->parseJSON(jsonTxt)) {
+            free(jsonTxt);
+            request->send(200);
+        } else {
+            request->send(400);
+        }
     });
 }
 

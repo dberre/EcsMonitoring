@@ -25,7 +25,7 @@ WatchdogTimer *watchdogTimer = NULL;
 void makeMeasurementCallback(void *args) {
   ets_printf("ISR\n");
   RequestQueueMsg req = TrigMeasurementRequest;
-  xQueueSend(requestQueue, &req, 0);
+  xQueueSendFromISR(requestQueue, &req, 0);
 }
 
 void watchdogCallback(void *args) {
@@ -111,7 +111,33 @@ float getPowerConsumption() {
 }
 
 void saveMeasurement(DataPoint& point) {
-  persistence.addDataPoint(point);
+  bool save = false;
+  if (ApplicationSettings::instance()->getStorageMode() == ApplicationSettings::StorageMode::delta) {
+    DataPoint lastPoint = persistence.getLastDataPoint();
+    // for the temperature, incremental means that difference with previous point > threshold
+    if (ApplicationSettings::instance()->getColdSensorPresence()
+      && abs(point.coldTemperature - lastPoint.coldTemperature) > ApplicationSettings::instance()->getTemperatureThreshold()) {
+      save = true;
+    }
+
+    if (ApplicationSettings::instance()->getHotSensorPresence()
+      && abs(point.hotTemperature == lastPoint.hotTemperature) > ApplicationSettings::instance()->getTemperatureThreshold()) {
+      save = true;
+    }
+
+    // for the power, incremental mean that state ON/OFF is different from the previous point
+    if (ApplicationSettings::instance()->getVoltageSensorPresence()
+      && ((point.power > ApplicationSettings::instance()->getPowerThreshold()) !=  
+        (lastPoint.power > ApplicationSettings::instance()->getPowerThreshold()))) {
+      save = true;
+    }
+  } else {
+    save = true;
+  }
+
+  if (save) {
+    persistence.addDataPoint(point);
+  }
 }
 
 void gotoSleep() {

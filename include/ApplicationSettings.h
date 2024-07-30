@@ -2,14 +2,20 @@
 #include <Preferences.h>
 
 #define POWER_THRESHOLD "powerThreshold"
+#define TEMPERATURE_THRESHOLD "heatThreshold"
 #define PAGE_SIZE "pageSize"
-#define HOT_SENSOR_PRESENCE "hotSensor"
-#define COLD_SENSOR_PRESENCE "coldSensor"
-#define VOLTAGE_SENSOR_PRESENCE "voltageSensor"
+#define HOT_SENSOR_PRESENCE "hotSensorOn"
+#define COLD_SENSOR_PRESENCE "coldSensorOn"
+#define VOLTAGE_SENSOR_PRESENCE "voltageSensorOn"
+#define STORAGE_MODE "storageMode"
+
+// size of concantenated string: 14 + 13 + 8 + 11 +12 + 15 + 11 = 84
 
 class ApplicationSettings {
     public:
     ApplicationSettings();
+
+    enum StorageMode: int { full = 1, delta };
 
     String getJSON();
     bool parseJSON(char *jsonTxt);
@@ -18,6 +24,9 @@ class ApplicationSettings {
 
     int getPowerThreshold();
     void setPowerThreshold(int power);
+
+    int getTemperatureThreshold();
+    void setTemperatureThreshold(int temperature);
 
     int getPageSize();
     void setPageSize(int size);
@@ -31,12 +40,17 @@ class ApplicationSettings {
     bool getVoltageSensorPresence();
     void setVoltageSensorPresence(bool present);
 
+    StorageMode getStorageMode();
+    void setStorageMode(StorageMode mode);
+
     private:
     static ApplicationSettings *instance_;
 
     bool coldSensorPresence_;
     bool hotTSensorPresence_;
     bool voltageSensorPresence_;
+    StorageMode storageMode_;
+    int temperatureThreshold_;
 
     char* searchKey(const char* jsonTxt, const char* key);
 
