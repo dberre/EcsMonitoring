@@ -19,27 +19,41 @@ ApplicationSettings::ApplicationSettings()
         Serial.println("Init global settings");
         settings_.putInt(PAGE_SIZE, 20);
         settings_.putInt(POWER_THRESHOLD, 15);
+        settings_.putInt(TEMPERATURE_THRESHOLD, 10);
         settings_.putBool(COLD_SENSOR_PRESENCE, false);
         settings_.putBool(HOT_SENSOR_PRESENCE, false);
         settings_.putBool(VOLTAGE_SENSOR_PRESENCE, false);
+        settings_.putInt(STORAGE_MODE, StorageMode::full);
         settings_.putBool("global_init", true);
-    } else {
-        coldSensorPresence_ = settings_.getBool(COLD_SENSOR_PRESENCE);
-        hotTSensorPresence_ = settings_.getBool(HOT_SENSOR_PRESENCE);
-        voltageSensorPresence_ = settings_.getBool(VOLTAGE_SENSOR_PRESENCE);
     }
+
+    coldSensorPresence_ = settings_.getBool(COLD_SENSOR_PRESENCE);
+    hotTSensorPresence_ = settings_.getBool(HOT_SENSOR_PRESENCE);
+    voltageSensorPresence_ = settings_.getBool(VOLTAGE_SENSOR_PRESENCE);
+    temperatureThreshold_ = settings_.getInt(TEMPERATURE_THRESHOLD);
+    storageMode_ = static_cast<StorageMode>(settings_.getInt(STORAGE_MODE));
+
     settings_.end();
 }
 
 String ApplicationSettings::getJSON() {
     char jsonString[256];
     snprintf(jsonString, sizeof(jsonString), 
-        "{\"pageSize\":%d,\"powerThreshold\":%d,\"coldSensorPresence\":%d,\"hotSensorPresence\":%d,\"voltageSensorPresence\":%d}",
+        "{\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d}",
+        PAGE_SIZE,
         this->getPageSize(),
+        POWER_THRESHOLD,
         this->getPowerThreshold(),
+        COLD_SENSOR_PRESENCE,
         this->getColdSensorPresence() ? 1 : 0,
+        HOT_SENSOR_PRESENCE,
         this->getHotSensorPresence() ? 1 : 0,
-        this->getVoltageSensorPresence() ? 1 : 0
+        VOLTAGE_SENSOR_PRESENCE,
+        this->getVoltageSensorPresence() ? 1 : 0,
+        STORAGE_MODE,
+        this->getStorageMode(),
+        TEMPERATURE_THRESHOLD,
+        this->getTemperatureThreshold()
     );
     return String(jsonString);
 }
@@ -49,11 +63,13 @@ bool ApplicationSettings::parseJSON(char *jsonTxt) {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, (const char*)jsonTxt);
     if (error == DeserializationError::Ok) {
-        if (doc.containsKey("pageSize")) this->setPageSize(doc["pageSize"]);
-        if (doc.containsKey("powerThreshold")) this->setPowerThreshold(doc["powerThreshold"]);
-        if (doc.containsKey("coldSensorPresence")) this->setColdSensorPresence(doc["coldSensorPresence"] == 1);
-        if (doc.containsKey("hotSensorPresence")) this->setHotSensorPresence(doc["hotSensorPresence"] == 1);
-        if (doc.containsKey("voltageSensorPresence")) this->setVoltageSensorPresence(doc["voltageSensorPresence"] == 1);
+        if (doc.containsKey(PAGE_SIZE)) this->setPageSize(doc[PAGE_SIZE]);
+        if (doc.containsKey(POWER_THRESHOLD)) this->setPowerThreshold(doc[POWER_THRESHOLD]);
+        if (doc.containsKey(COLD_SENSOR_PRESENCE)) this->setColdSensorPresence(doc[COLD_SENSOR_PRESENCE] == 1);
+        if (doc.containsKey(HOT_SENSOR_PRESENCE)) this->setHotSensorPresence(doc[HOT_SENSOR_PRESENCE] == 1);
+        if (doc.containsKey(VOLTAGE_SENSOR_PRESENCE)) this->setVoltageSensorPresence(doc[VOLTAGE_SENSOR_PRESENCE] == 1);
+        if (doc.containsKey(STORAGE_MODE)) this->setStorageMode(doc[STORAGE_MODE]);
+        if (doc.containsKey(TEMPERATURE_THRESHOLD)) this->setTemperatureThreshold(doc[TEMPERATURE_THRESHOLD]);
         return true;
     }
     return false;
@@ -82,6 +98,17 @@ int ApplicationSettings::getPowerThreshold() {
 void ApplicationSettings::setPowerThreshold(int power) {
     settings_.begin("global", false);
     settings_.putInt(POWER_THRESHOLD, power);
+    settings_.end();
+}
+
+int ApplicationSettings::getTemperatureThreshold() {
+    return temperatureThreshold_;
+}
+
+void ApplicationSettings::setTemperatureThreshold(int temperature) {
+    temperatureThreshold_ = temperature;
+    settings_.begin("global", false);
+    settings_.putBool(TEMPERATURE_THRESHOLD, temperature);
     settings_.end();
 }
 
@@ -115,5 +142,16 @@ void ApplicationSettings::setVoltageSensorPresence(bool presence) {
     voltageSensorPresence_ = presence;
     settings_.begin("global", false);
     settings_.putBool(VOLTAGE_SENSOR_PRESENCE, presence);
+    settings_.end();
+}
+
+ApplicationSettings::StorageMode ApplicationSettings::getStorageMode() {
+    return storageMode_;
+}
+
+void ApplicationSettings::setStorageMode(StorageMode mode) {
+    storageMode_ = mode;
+    settings_.begin("global", false);
+    settings_.putBool(STORAGE_MODE, mode);
     settings_.end();
 }

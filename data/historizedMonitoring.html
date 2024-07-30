@@ -9,6 +9,7 @@
             }
             .outer-box {
 				 text-align: center;
+                 padding: 10px;
             }
             .inner-box {
             	display: inline-block;
@@ -20,7 +21,7 @@
             }
             table {
                 border-collapse: collapse;
-                margin: 0 auto;
+                margin: 10px auto;
             }
             table td {
                 padding: 10px;
@@ -31,42 +32,44 @@
         <link rel="stylesheet" type="text/css" href="w3.css">
         <script type="text/javascript" src="script.js"></script>
         <script>
-            function getPageSize() {
-                return Number(document.getElementById("inputPageSize").value);
-            } 
-
-            function getPageOffset() {
-                return Number(document.getElementById("inputPageOffset").value);
-            }
-            
-            function setPageSize(newValue) {
-                document.getElementById("inputPageSize").value = newValue;
-            } 
-
-            function setPageOffset(newValue) {
-                document.getElementById("inputPageOffset").value = newValue;
-            }
+            var pageSize = 10;
+            var pageNumber = 1;
 
             window.onload = () => {
-                fillForm();
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        console.log("/getPreferences done")
+                        const obj = JSON.parse(this.responseText);
+                        pageSize = Number(obj.pageSize);
+                        document.getElementById("pageNumberElt").innerHTML = pageNumber;
+                        fillTable();
+                    } else {
+                        console.log(`/getPreferences in progress (status=${this.status}, readyState=${this.readyState})`);
+                    }
+                }
+                xhttp.open("GET", "getPreferences", true);
+                xhttp.send();
             }
 
             function pageDown() {
-                setPageOffset(getPageOffset() + getPageSize());
+                pageNumber += 1;
+                document.getElementById(pageNumberElt.innerHTML = pageNumber)
                 fillTable();
             }
 
             function pageUp() {
-                var pageOffset = getPageOffset() - getPageSize();
-                if (pageOffset < 0) {
-                    pageOffset = 0;
+                pageNumber -= 1;
+                if (pageNumber < 1) {
+                    pageNumber = 1;
                 }
-                setPageOffset(pageOffset);
+                document.getElementById(pageNumberElt.innerHTML = pageNumber)
                 fillTable();
             }
 
             function firstPage() {
-                setPageOffset(0);
+                pageNumber = 1;
+                document.getElementById(pageNumberElt.innerHTML = pageNumber)
                 fillTable();
             }
 
@@ -77,27 +80,13 @@
                     if (this.readyState == 4 && this.status == 200) {
                         const obj = JSON.parse(this.responseText)
                         let depth = Number(obj.historyDepth);
-                        setPageOffset(depth - getPageSize());
+                        pageNumber = Math.floor(depth / pageSize);
+                        if ((depth % pageSize) > 0) pageNumber += 1;
+                        document.getElementById(pageNumberElt.innerHTML = pageNumber)
                         fillTable();
                     } 
                 }
                 xhttp.open("GET", `historyDepth`, true);
-                xhttp.send();
-            }
-
-            function fillForm() {
-                var xhttp = new XMLHttpRequest();
-                xhttp.onreadystatechange = function () {
-                    if (this.readyState == 4 && this.status == 200) {
-                        console.log("/getPreferences done")
-                        const obj = JSON.parse(this.responseText);
-                        document.getElementById("inputPageSize").value = Number(obj.pageSize);
-                        fillTable();
-                    } else {
-                        console.log(`/getPreferences in progress (status=${this.status}, readyState=${this.readyState})`);
-                    }
-                }
-                xhttp.open("GET", "getPreferences", true);
                 xhttp.send();
             }
 
@@ -109,7 +98,6 @@
         
                 xhttp.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
-                        console.log("/history done")
                         let rows = this.responseText.split("\n");
                         for (let row of rows) {
                             let cols = row.match(/(?:\"([^\"]*(?:\"\"[^\"]*)*)\")|([^\",]+)/g);
@@ -125,8 +113,8 @@
                         console.log(`/history in progress (status=${this.status}, readyState=${this.readyState})`);
                     }
                 }
-
-                xhttp.open("GET", `history?count=${getPageSize()}&offset=${getPageOffset()}` , true);
+                let pageOffset = (pageNumber - 1) * pageSize;
+                xhttp.open("GET", `history?count=${pageSize}&offset=${pageOffset}`, true);
                 xhttp.send();
             }
         </script>
@@ -134,30 +122,25 @@
 
     <body class="w3-animate-opacity">
         <div class="w3-card w3-blue w3-padding-small w3-center">
-            <h1>Historique</h1>
+            <h1>Historique - page <span id="pageNumberElt">--</span></h1>
         </div>
-        <br>
         <div class="outer-box">
         	<div class="inner-box">
-                <label for="inputPageSize">Page size</label>
-                <input type="number", id="inputPageSize" name="inputPageSize" value="10" min="10" max="60" step="10"/>
-                <label for="inputPageOffset">Offset</label>
-                <input type="number", id="inputPageOffset" name="inputPageOffset" value="0" min="0" max="64000"/>
+                <!-- Page<span id="pageNumberElt">--</span><br> -->
                 <button onclick="pageDown()">
-                    <p>&#x21e9;</p>
+                    Page down &#x21e9;
                 </button>
                 <button onclick="pageUp()">
-                    <p>&#x21e7;</p>
+                    page up &#x21e7;
                 </button>
                 <button onclick="lastPage()">
-                    <p>&#x2913;</p>
+                    Last page &#x2913;
                 </button>
                 <button onclick="firstPage()">
-                    <p>&#x2912;</p>
+                    First page &#x2912;
                 </button>
         	</div>
         </div>
-        <br>
         <div class="scroll-container">
             <table id="table"></table>
         </div>

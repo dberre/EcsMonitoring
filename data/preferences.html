@@ -14,9 +14,11 @@
                     const obj = JSON.parse(this.responseText);
                     document.getElementById("pageSize").value = Number(obj.pageSize);
                     document.getElementById("powerThreshold").value = Number(obj.powerThreshold);
-                    document.getElementById("coldSensorPresence").checked = Boolean(obj.coldSensorPresence);
-                    document.getElementById("hotSensorPresence").checked = Boolean(obj.hotSensorPresence);
-                    document.getElementById("voltageSensorPresence").checked = Boolean(obj.voltageSensorPresence);
+                    document.getElementById("coldSensorOn").checked = Boolean(obj.coldSensorOn);
+                    document.getElementById("hotSensorOn").checked = Boolean(obj.hotSensorOn);
+                    document.getElementById("voltageSensorOn").checked = Boolean(obj.voltageSensorOn);
+                    document.getElementById("storageMode").value = (Number(obj.storageMode) == 1) ? "full" : "incremental";
+                    document.getElementById("heatThreshold").value = Number(obj.heatThreshold);
                 }
             }
             xhttp.open("GET", "getPreferences", true);
@@ -26,35 +28,75 @@
         function savePreferences() {
             let pageSize = Number(document.getElementById("pageSize").value);
             let powerThreshold = Number(document.getElementById("powerThreshold").value);
-            let coldSensorPresence = (document.getElementById("coldSensorPresence").checked) ? 1 : 0;
-            let hotSensorPresence = (document.getElementById("hotSensorPresence").checked) ? 1 : 0;
-            let voltageSensorPresence = (document.getElementById("voltageSensorPresence").checked) ? 1 : 0;
+            let coldSensorOn = (document.getElementById("coldSensorOn").checked) ? 1 : 0;
+            let hotSensorOn = (document.getElementById("hotSensorOn").checked) ? 1 : 0;
+            let voltageSensorOn = (document.getElementById("voltageSensorOn").checked) ? 1 : 0;
+            let storageMode = (document.getElementById("storageMode").value == "full") ? 1 : 2;
+            console.log(storageMode);
+            let heatThreshold = Number(document.getElementById("heatThreshold").value);
+``
+            let jsonObject = {
+                "pageSize":pageSize,
+                "powerThreshold":powerThreshold,
+                "coldSensorOn":coldSensorOn,
+                "hotSensorOn":hotSensorOn,
+                "voltageSensorOn":voltageSensorOn,
+                "storageMode":storageMode,
+                "heatThreshold":heatThreshold};
+            let jsonString = JSON.stringify(jsonObject);
 
-            let jsonObject = {"pageSize":pageSize,"powerThreshold":powerThreshold,"coldSensorPresence":coldSensorPresence,"hotSensorPresence":hotSensorPresence,"voltageSensorPresence":voltageSensorPresence};
-            
             var xhttp = new XMLHttpRequest();
-            xhttp.open("POST", `${window.location.protocol}//${window.location.hostname}`);
-            xhttp.setRequestHeader("Content-Type", "application/json");
-            xhttp.onload = () => console.log(xhttp.status);  // TODO feedback ?
-            xhttp.send(JSON.stringify(jsonObject));
+            xhttp.open("POST", `${window.location.protocol}//${window.location.hostname}/setPreferences`);
+            xhttp.onload = () => console.log(xhttp.status);  // TODO
+            xhttp.send(jsonString);
         }
     </script>
-</head>
+    <style>
+        /* label {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        } */
+        .outer-box {
+			text-align: center;
+        }
 
-    <form>
-        <label for="pageSize">Number of rows on the history page:</label>&nbsp;
-        <input type="text" id="pageSize" name="pageSize" value="10"><br>
-        <label for="powerThreshold">Heating detection threshold (W):</label>&nbsp;
-        <input type="text" id="powerThreshold" name="powerThreshold" value="10"><br>
-        <label for="coldSensorPresence">Cold sensor presence:</label>&nbsp;
-        <input type="checkbox" id="coldSensorPresence" name="coldSensorPresence" value="coldSensorPresence"/><br>
-        <label for="hotSensorPresence">Hot sensor presence:</label>&nbsp;
-        <input type="checkbox" id="hotSensorPresence" name="hotSensorPresence" value="hotSensorPresence"/><br>
-        <label for="voltageSensorPresence">Voltage sensor presence:</label>&nbsp;
-        <input type="checkbox" id="voltageSensorPresence" name="voltageSensorPresence" value="voltageSensorPresence"/>
-        <br><br>
-        <button type="button" onclick="savePreferences()">Sauver</button>
-        <br>
-        <button type="button" onclick="window.location.href='/'">Retourner au menu</button>
-    </form>
+        .options-list {
+            text-align: left;
+            display: inline-block;
+            padding: 10px;
+        }
+    </style>
+</head>
+    <body>
+        <div class="w3-card w3-blue w3-padding-small w3-center">
+            <h1>Preferences</h1>
+        </div>
+        <div class="outer-box">
+            <div class="options-list">
+                <form>
+                    <label for="pageSize">Number of rows on the history page:</label>&nbsp;
+                    <input type="text" id="pageSize" name="pageSize" value="10"><br>
+                    <label for="powerThreshold">Heating detection threshold (W):</label>&nbsp;
+                    <input type="text" id="powerThreshold" name="powerThreshold" value="10"><br>
+                    <label for="coldSensorOn">Cold sensor presence:</label>&nbsp;
+                    <input type="checkbox" id="coldSensorOn" name="coldSensorOn" value="coldSensorOn"/><br>
+                    <label for="hotSensorOn">Hot sensor presence:</label>&nbsp;
+                    <input type="checkbox" id="hotSensorOn" name="hotSensorOn" value="hotSensorOn"/><br>
+                    <label for="voltageSensorOn">Voltage sensor presence:</label>&nbsp;
+                    <input type="checkbox" id="voltageSensorOn" name="voltageSensorOn" value="voltageSensorOn"/><br>
+                    <label for="storageMode">Storage mode:</label>
+                    <select name="storageMode" id="storageMode">
+                      <option value="full">Full</option>
+                      <option value="incremental">Incremental</option>
+                    </select><br>
+                    <label for="heatThreshold">Temperature threshold:</label>&nbsp;
+                    <input type="text" id="heatThreshold" name="heatThreshold" value="10">
+                </form>
+            </div>
+            <div class="w3-padding-24">
+                <button type="button" onclick="savePreferences()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide">Sauver</button>
+                <button type="button" onclick="window.location.href='/'" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" >Retourner au menu</button>
+            </div>
+        </div>
+    </body>
 </html>
