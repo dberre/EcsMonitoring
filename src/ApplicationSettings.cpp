@@ -16,7 +16,6 @@ ApplicationSettings::ApplicationSettings()
 {
     settings_.begin("global", false);
     if (settings_.isKey("global_init") == false) {
-        Serial.println("Init global settings");
         settings_.putInt(PAGE_SIZE, 20);
         settings_.putInt(POWER_THRESHOLD, 15);
         settings_.putInt(TEMPERATURE_THRESHOLD, 10);
@@ -24,6 +23,7 @@ ApplicationSettings::ApplicationSettings()
         settings_.putBool(HOT_SENSOR_PRESENCE, false);
         settings_.putBool(VOLTAGE_SENSOR_PRESENCE, false);
         settings_.putInt(STORAGE_MODE, StorageMode::full);
+        settings_.putInt(SAMPLING_PERIOD, 60);
         settings_.putBool("global_init", true);
     }
 
@@ -32,6 +32,7 @@ ApplicationSettings::ApplicationSettings()
     voltageSensorPresence_ = settings_.getBool(VOLTAGE_SENSOR_PRESENCE);
     temperatureThreshold_ = settings_.getInt(TEMPERATURE_THRESHOLD);
     storageMode_ = static_cast<StorageMode>(settings_.getInt(STORAGE_MODE));
+    samplingPeriod_ = settings_.getInt(SAMPLING_PERIOD);
 
     settings_.end();
 }
@@ -39,7 +40,7 @@ ApplicationSettings::ApplicationSettings()
 String ApplicationSettings::getJSON() {
     char jsonString[256];
     snprintf(jsonString, sizeof(jsonString), 
-        "{\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d}",
+        "{\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d,\"%s\":%d}",
         PAGE_SIZE,
         this->getPageSize(),
         POWER_THRESHOLD,
@@ -53,7 +54,9 @@ String ApplicationSettings::getJSON() {
         STORAGE_MODE,
         this->getStorageMode(),
         TEMPERATURE_THRESHOLD,
-        this->getTemperatureThreshold()
+        this->getTemperatureThreshold(),
+        SAMPLING_PERIOD,
+        this->getSamplingPeriod()
     );
     return String(jsonString);
 }
@@ -70,6 +73,7 @@ bool ApplicationSettings::parseJSON(char *jsonTxt) {
         if (doc.containsKey(VOLTAGE_SENSOR_PRESENCE)) this->setVoltageSensorPresence(doc[VOLTAGE_SENSOR_PRESENCE] == 1);
         if (doc.containsKey(STORAGE_MODE)) this->setStorageMode(doc[STORAGE_MODE]);
         if (doc.containsKey(TEMPERATURE_THRESHOLD)) this->setTemperatureThreshold(doc[TEMPERATURE_THRESHOLD]);
+        if (doc.containsKey(SAMPLING_PERIOD)) this->setSamplingPeriod(doc[SAMPLING_PERIOD]);
         return true;
     }
     return false;
@@ -152,6 +156,17 @@ ApplicationSettings::StorageMode ApplicationSettings::getStorageMode() {
 void ApplicationSettings::setStorageMode(StorageMode mode) {
     storageMode_ = mode;
     settings_.begin("global", false);
-    settings_.putBool(STORAGE_MODE, mode);
+    settings_.putInt(STORAGE_MODE, mode);
+    settings_.end();
+}
+
+int ApplicationSettings::getSamplingPeriod() {
+    return samplingPeriod_;
+}
+
+void ApplicationSettings::setSamplingPeriod(int period) {
+    samplingPeriod_ = period;
+    settings_.begin("global", false);
+    settings_.putInt(SAMPLING_PERIOD, period);
     settings_.end();
 }

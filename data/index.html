@@ -5,37 +5,48 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
         <link rel="stylesheet" type="text/css" href="w3.css">
         <script type="text/javascript" src="script.js"></script>
+
+        <style>
+            .vertical-menu {
+              width: 200px;
+            }
+            
+            .vertical-menu a {
+              background-color: #eee;
+              color: black;
+              display: block;
+              padding: 12px;
+              text-decoration: none;
+            }
+            
+            .vertical-menu a:hover {
+              background-color: #ccc;
+            }
+            
+            .vertical-menu a.active {
+              background-color: #04AA6D;
+              color: white;
+            }
+        </style>
     </head>
 
     <body class="w3-animate-opacity">
-        <div class="w3-card w3-blue w3-padding-small w3-center">
+
+        <div class="w3-card w3-blue w3-padding-small">
             <h1>ECS monitoring</h1>
         </div>
 
-        <div class="w3-padding-small w3-center">
-            <button onClick="window.location.href='immediateMonitoring'" class="w3-button w3-green w3-xlarge w3-ripple w3-wide" style="width:40%;">Valeurs instantanées</button>
+        <div class="vertical-menu">
+            <a href="immediateMonitoring">Valeurs instantanées</a>
+            <a href="voltageMonitoring">Lecture courant</a>
+            <a href="historizedMonitoring">Historique</a>
+            <a href="#" onclick="gotoSleepButton()">Mettre en veille</a>
+            <a href="#" onClick="setTimeButton()">Mettre à l'heure</a>
+            <a href="#" onClick="clearHistoryButton()" style="color: red;">Effacer l'historique</a>
+            <a href="downloadHistory">Telecharger l'historique</a>
+            <a href="preferences">Preferences</a>
         </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="window.location.href='voltageMonitoring'" class="w3-button w3-green w3-xlarge w3-ripple w3-wide" style="width:40%;">Lecture courant</button>
-        </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="window.location.href='historizedMonitoring'" class="w3-button w3-green w3-xlarge w3-ripple w3-wide" style="width:40%;">Historique</button>
-        </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="gotoSleepButton()" class="w3-button w3-red w3-xlarge w3-ripple w3-wide" style="width:40%;">Mettre en veille</button>
-        </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="setTimeButton()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Mettre à l'heure</button>
-        </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="clearHistoryButton()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Effacer l'historique</button>
-        </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="downloadHistoryButton()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Telecharger l'historique</button>
-        </div>
-        <div class="w3-padding-small w3-center">
-            <button onClick="window.location.href='preferences'" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" style="width:40%;">Preferences</button>
-        </div>
+
     </body>
 
 </html>

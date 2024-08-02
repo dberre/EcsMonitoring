@@ -8,8 +8,9 @@
 #define COLD_SENSOR_PRESENCE "coldSensorOn"
 #define VOLTAGE_SENSOR_PRESENCE "voltageSensorOn"
 #define STORAGE_MODE "storageMode"
+#define SAMPLING_PERIOD "samplingPeriod"
 
-// size of concantenated string: 14 + 13 + 8 + 11 +12 + 15 + 11 = 84
+// size of concantenated string: 14 + 13 + 8 + 11 +12 + 15 + 11 + 14 = 98
 
 class ApplicationSettings {
     public:
@@ -43,6 +44,10 @@ class ApplicationSettings {
     StorageMode getStorageMode();
     void setStorageMode(StorageMode mode);
 
+    int getSamplingPeriod();
+    void setSamplingPeriod(int period);
+
+
     private:
     static ApplicationSettings *instance_;
 
@@ -51,6 +56,7 @@ class ApplicationSettings {
     bool voltageSensorPresence_;
     StorageMode storageMode_;
     int temperatureThreshold_;
+    int samplingPeriod_;
 
     char* searchKey(const char* jsonTxt, const char* key);
 

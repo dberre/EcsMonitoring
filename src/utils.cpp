@@ -72,8 +72,8 @@ void setupForRTCWakeup() {
 void setupForUserWakeup() {
   Serial.println("setupForUserWakeup");
 
-  // timer to trig a measurement every 60s
-  acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback, 60000000ULL);
+  uint64_t slampingPeriod = ApplicationSettings::instance()->getSamplingPeriod() * 1000000ULL;
+  acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback, slampingPeriod);
   acquisitionTimer->start();
 
   // watchdog to go to sleep mode after 120s of inactivity
@@ -172,14 +172,17 @@ void gotoSleep() {
 time_t computeNextTick() {
   time_t now = time(NULL);
   tm *tnow = localtime(&now);
-  tnow->tm_min += 1;
-  tnow->tm_sec = 0;
-  if (tnow->tm_min > 59) {
-    tnow->tm_min = 0;
-    tnow->tm_hour += 1;
-    if (tnow->tm_hour > 23) {
-      tnow->tm_hour = 0;
-      tnow->tm_mday += 1;
+  tnow->tm_sec += ApplicationSettings::instance()->getSamplingPeriod();
+  if (tnow->tm_sec > 59) {
+    tnow->tm_min += (tnow->tm_sec / 60);
+    tnow->tm_sec %= 60;
+    if (tnow->tm_min > 59) {
+      tnow->tm_hour += (tnow->tm_min / 60);
+      tnow->tm_min %= 60;
+      if (tnow->tm_hour > 23) {
+        tnow->tm_hour %= 24;
+        tnow->tm_mday += 1;
+      }
     }
   }
   return mktime(tnow) - now;

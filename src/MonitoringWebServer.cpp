@@ -34,6 +34,12 @@ MonitoringWebServer::MonitoringWebServer() {
         request->send(SPIFFS, "/historizedMonitoring.html", "text/html");
         watchdogTimer->restart();
     });
+ 
+    server->on("/downloadHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /downloadHistory");
+        request->send(SPIFFS, "/downloadHistory.html", "text/html");
+        watchdogTimer->restart();
+    });
 
     server->on("/preferences", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /preferences");
@@ -60,8 +66,8 @@ MonitoringWebServer::MonitoringWebServer() {
         request->send(200);
     });
 
-    server->on("/downloadHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("server: /downloadHistory");
+    server->on("/downloadHistoryRaw", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /downloadHistoryRaw");
         acquisitionTimer->suspend();
         request->send(SPIFFS, "/EcsMonitoring.dat", "application/octet-stream");
         acquisitionTimer->resume();
@@ -277,6 +283,7 @@ MonitoringWebServer::MonitoringWebServer() {
         char *jsonTxt = strndup((const char*)data, len);
         if (ApplicationSettings::instance()->parseJSON(jsonTxt)) {
             free(jsonTxt);
+            // TODO restart acq timer and others ?
             request->send(200);
         } else {
             request->send(400);

@@ -19,6 +19,7 @@
                     document.getElementById("voltageSensorOn").checked = Boolean(obj.voltageSensorOn);
                     document.getElementById("storageMode").value = (Number(obj.storageMode) == 1) ? "full" : "incremental";
                     document.getElementById("heatThreshold").value = Number(obj.heatThreshold);
+                    document.getElementById("samplingPeriod").value = Number(obj.samplingPeriod);
                 }
             }
             xhttp.open("GET", "getPreferences", true);
@@ -32,8 +33,8 @@
             let hotSensorOn = (document.getElementById("hotSensorOn").checked) ? 1 : 0;
             let voltageSensorOn = (document.getElementById("voltageSensorOn").checked) ? 1 : 0;
             let storageMode = (document.getElementById("storageMode").value == "full") ? 1 : 2;
-            console.log(storageMode);
             let heatThreshold = Number(document.getElementById("heatThreshold").value);
+            let samplingPeriod = Number(document.getElementById("samplingPeriod").value);
 ``
             let jsonObject = {
                 "pageSize":pageSize,
@@ -42,7 +43,8 @@
                 "hotSensorOn":hotSensorOn,
                 "voltageSensorOn":voltageSensorOn,
                 "storageMode":storageMode,
-                "heatThreshold":heatThreshold};
+                "heatThreshold":heatThreshold,
+                "samplingPeriod":samplingPeriod};
             let jsonString = JSON.stringify(jsonObject);
 
             var xhttp = new XMLHttpRequest();
@@ -52,10 +54,6 @@
         }
     </script>
     <style>
-        /* label {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        } */
         .outer-box {
 			text-align: center;
         }
@@ -63,8 +61,34 @@
         .options-list {
             text-align: left;
             display: inline-block;
-            padding: 10px;
+            padding: 10px 0;
         }
+
+        .button-box {
+            text-align: left;
+            display: inline-block;
+            padding: 10px 0;
+        }
+
+        label, select, option, input {
+            padding: 5px;
+            margin: 5px 0;
+            font-size: 15px;
+        }
+
+        .button {
+            border: none;
+            color: white;
+            padding: 10px 30px;
+            text-align: left;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .buttonRed {background-color: #ff0400;} /* Red */
+        .buttonGreen {background-color: #04AA6D;} /* Green */
     </style>
 </head>
     <body>
@@ -75,27 +99,36 @@
             <div class="options-list">
                 <form>
                     <label for="pageSize">Number of rows on the history page:</label>&nbsp;
-                    <input type="text" id="pageSize" name="pageSize" value="10"><br>
+                    <input type="text" id="pageSize" name="pageSize" value="10">
+                    <br>
                     <label for="powerThreshold">Heating detection threshold (W):</label>&nbsp;
-                    <input type="text" id="powerThreshold" name="powerThreshold" value="10"><br>
+                    <input type="text" id="powerThreshold" name="powerThreshold" value="10">
+                    <br>
+                    <label for="heatThreshold">Temperature threshold (0.1°C):</label>&nbsp;
+                    <input type="text" id="heatThreshold" name="heatThreshold" value="10">
+                    <br>
                     <label for="coldSensorOn">Cold sensor presence:</label>&nbsp;
-                    <input type="checkbox" id="coldSensorOn" name="coldSensorOn" value="coldSensorOn"/><br>
+                    <input type="checkbox" id="coldSensorOn" name="coldSensorOn" value="coldSensorOn"/>
+                    <br>
                     <label for="hotSensorOn">Hot sensor presence:</label>&nbsp;
-                    <input type="checkbox" id="hotSensorOn" name="hotSensorOn" value="hotSensorOn"/><br>
+                    <input type="checkbox" id="hotSensorOn" name="hotSensorOn" value="hotSensorOn"/>
+                    <br>
                     <label for="voltageSensorOn">Voltage sensor presence:</label>&nbsp;
-                    <input type="checkbox" id="voltageSensorOn" name="voltageSensorOn" value="voltageSensorOn"/><br>
+                    <input type="checkbox" id="voltageSensorOn" name="voltageSensorOn" value="voltageSensorOn"/>
+                    <br>
                     <label for="storageMode">Storage mode:</label>
                     <select name="storageMode" id="storageMode">
                       <option value="full">Full</option>
                       <option value="incremental">Incremental</option>
-                    </select><br>
-                    <label for="heatThreshold">Temperature threshold:</label>&nbsp;
-                    <input type="text" id="heatThreshold" name="heatThreshold" value="10">
+                    </select>
+                    <br>
+                    <label for="samplingPeriod">Sampling period (sec):</label>&nbsp;
+                    <input type="text" id="samplingPeriod" name="samplingPeriod" value="60"><br>
                 </form>
-            </div>
-            <div class="w3-padding-24">
-                <button type="button" onclick="savePreferences()" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide">Sauver</button>
-                <button type="button" onclick="window.location.href='/'" class="w3-button w3-blue w3-xlarge w3-ripple w3-wide" >Retourner au menu</button>
+                <div class="button-box">
+                    <button type="button" class="button buttonRed" onclick="savePreferences()">Save</button><br>
+                    <button type="button" class="button buttonGreen" onclick="window.location.href='/'">Main menu</button>
+                </div>
             </div>
         </div>
     </body>
