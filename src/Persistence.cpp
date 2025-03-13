@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <SPIFFS.h>
+#include "FS.h"
+#include "LittleFS.h"
 
 #include "Persistence.h"
 
@@ -39,7 +40,7 @@ DataPoint Persistence::getLastDataPoint() {
 
 void Persistence::saveToFile() {
     Serial.println("Persistance save");
-    File file = SPIFFS.open(dataFilename, "ab", true);
+    File file = LittleFS.open(dataFilename, "ab", true);
     for (int i = 0; i < dataCursor_; i++) {
         DataPoint pt = dataPoints_[i];
         file.write((const uint8_t *)(&pt), sizeof(DataPoint));
@@ -70,7 +71,7 @@ int Persistence::getDataPoints(DataPoint *dataPoints, int nbToRead, int offset =
     
     // if more points are needed then get them from the file
     if (stillToRead > 0) {
-        File file = SPIFFS.open(dataFilename, "rb");
+        File file = LittleFS.open(dataFilename, "rb");
         file.seek(0, SeekMode::SeekEnd);
         // file.position() points to just after the last written byte
         size_t recordsCount = file.position() / sizeof(DataPoint);
@@ -95,7 +96,7 @@ int Persistence::getDataPoints(DataPoint *dataPoints, int nbToRead, int offset =
 }
 
 int Persistence::getDataPointsCount() {
-    File file = SPIFFS.open(dataFilename, "rb");
+    File file = LittleFS.open(dataFilename, "rb");
     file.seek(0, SeekMode::SeekEnd);
     // file.position() points to just after the last written byte
     size_t recordsCount = file.position() / sizeof(DataPoint);
@@ -105,7 +106,7 @@ int Persistence::getDataPointsCount() {
 
 void Persistence::clear() {
     // erase file history
-    File file = SPIFFS.open(dataFilename, "wb");
+    File file = LittleFS.open(dataFilename, "wb");
     file.close();
     // erase local history
     dataCursor_ = 0;

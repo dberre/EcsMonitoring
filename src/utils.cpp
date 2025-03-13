@@ -1,9 +1,10 @@
 #include <Arduino.h>
 #include <time.h>
 #include <esp_timer.h>
+#include <esp_log.h>
 
 #include "utils.h"
-#include "Spiffs.h"
+#include "LittleFS.h"
 #include "AcquisitionTimer.h"
 #include "WatchdogTimer.h"
 #include "MonitoringWebServer.h"
@@ -22,19 +23,20 @@ AcquisitionTimer *acquisitionTimer = NULL;
 
 WatchdogTimer *watchdogTimer = NULL;
 
+// called by the timer in charge of trigging periodic measurements
 void makeMeasurementCallback(void *args) {
-  ets_printf("ISR\n");
   RequestQueueMsg req = TrigMeasurementRequest;
   xQueueSendFromISR(requestQueue, &req, 0);
+  // the timer is one shot and must be rearmed at each call
+  acquisitionTimer->start(ApplicationSettings::instance()->getSamplingPeriod());
 }
 
 void watchdogCallback(void *args) {
-  ets_printf("Watchdog expired\n");
   gotoSleep();
 }
 
 void listRootDirectory() {
-  File root = SPIFFS.open("/");
+  File root = LittleFS.open("/");
   File file = root.openNextFile();
   while(file) {
       Serial.printf("File: %s\n", file.name());
@@ -44,9 +46,8 @@ void listRootDirectory() {
 }
 
 void setupUtils() {
-
-  if(!SPIFFS.begin()) {
-    Serial.println("Persistence: SPIFFS begin failed");
+  if (!LittleFS.begin()) {
+    Serial.println("Persistence: LittleFS begin failed");
   }
 
   // Debugging purpose
@@ -71,14 +72,12 @@ void setupForRTCWakeup() {
 
 void setupForUserWakeup() {
   Serial.println("setupForUserWakeup");
-
-  uint64_t slampingPeriod = ApplicationSettings::instance()->getSamplingPeriod() * 1000000ULL;
-  acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback, slampingPeriod);
-  acquisitionTimer->start();
+  acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback);
+  acquisitionTimer->start(ApplicationSettings::instance()->getSamplingPeriod());
 
   // watchdog to go to sleep mode after 120s of inactivity
   // watchdogTimer = new WatchdogTimer(&watchdogCallback, 120000000ULL);
-  watchdogTimer = new WatchdogTimer(&watchdogCallback, 12000000000ULL);  // FIXME for test only
+  watchdogTimer = new WatchdogTimer(&watchdogCallback, 36000000000ULL);  // FIXME for test only
   monitoringWebServer.start();
 }
 
@@ -160,6 +159,7 @@ void gotoSleep() {
   Serial.printf("Going to sleep for %d seconds\n", timeToSleep);
   esp_sleep_enable_timer_wakeup(timeToSleep * 1000000ULL);
   #ifdef ESP32C3XIAO
+  // GPIO2 is DO on the board according to the ESP32 C3 schematic
   esp_err_t status = esp_deep_sleep_enable_gpio_wakeup((1ULL << GPIO_NUM_2), ESP_GPIO_WAKEUP_GPIO_LOW);
   #else
   // will wake if a low level occurs on pin G33

@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
-#include <SPIFFS.h>
+#include "FS.h"
+#include "LittleFS.h"
 
 #include "MonitoringWebServer.h"
 #include "utils.h"
@@ -13,51 +14,51 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /");
-        request->send(SPIFFS, "/index.html", "text/html");
+        request->send(LittleFS, "/index.html", "text/html");
         watchdogTimer->restart();
     });
 
     server->on("/immediateMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /immediateMonitoring");
-        request->send(SPIFFS, "/immediateMonitoring.html", "text/html");
+        request->send(LittleFS, "/immediateMonitoring.html", "text/html");
         watchdogTimer->restart();
     });
     
     server->on("/voltageMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /voltageMonitoring");
-        request->send(SPIFFS, "/voltageMonitoring.html", "text/html");
+        request->send(LittleFS, "/voltageMonitoring.html", "text/html");
         watchdogTimer->restart();
     });
     
     server->on("/historizedMonitoring", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /historizedMonitoring");
-        request->send(SPIFFS, "/historizedMonitoring.html", "text/html");
+        request->send(LittleFS, "/historizedMonitoring.html", "text/html");
         watchdogTimer->restart();
     });
  
     server->on("/downloadHistory", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /downloadHistory");
-        request->send(SPIFFS, "/downloadHistory.html", "text/html");
+        request->send(LittleFS, "/downloadHistory.html", "text/html");
         watchdogTimer->restart();
     });
 
     server->on("/preferences", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /preferences");
-        request->send(SPIFFS, "/preferences.html", "text/html");
+        request->send(LittleFS, "/preferences.html", "text/html");
         watchdogTimer->restart();
     });
     
     server->on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(SPIFFS, "/script.js", "text/javascript");
+        request->send(LittleFS, "/script.js", "text/javascript");
     });
     
     server->on("/w3.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(SPIFFS, "/w3.css", "text/css");
+        request->send(LittleFS, "/w3.css", "text/css");
     });
 
     server->on("/jquery-3.6.3.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /jquery-3.6.3.min.js");
-        request->send(SPIFFS, "/jquery-3.6.3.min.js", "text/javascript");
+        request->send(LittleFS, "/jquery-3.6.3.min.js", "text/javascript");
     });
 
     server->on("/gotoSleep", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -69,7 +70,7 @@ MonitoringWebServer::MonitoringWebServer() {
     server->on("/downloadHistoryRaw", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /downloadHistoryRaw");
         acquisitionTimer->suspend();
-        request->send(SPIFFS, "/EcsMonitoring.dat", "application/octet-stream");
+        request->send(LittleFS, "/EcsMonitoring.dat", "application/octet-stream");
         acquisitionTimer->resume();
         watchdogTimer->restart();
     });
@@ -283,7 +284,8 @@ MonitoringWebServer::MonitoringWebServer() {
         char *jsonTxt = strndup((const char*)data, len);
         if (ApplicationSettings::instance()->parseJSON(jsonTxt)) {
             free(jsonTxt);
-            // TODO restart acq timer and others ?
+            acquisitionTimer->stop();
+            acquisitionTimer->start(ApplicationSettings::instance()->getSamplingPeriod());
             request->send(200);
         } else {
             request->send(400);

@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-#include "Utils.h"
+#include "utils.h"
 #include "VoltageSensor.h"
 #include "Ads1115Board.h"
 #include "Queues.h"
@@ -33,7 +33,6 @@ void loop() {
       case RequestQueueMsg::MsgTypes::trigMeasurement: {
           DataPoint newPoint = makeMeasurement();
           saveMeasurement(newPoint);
-          acquisitionTimer->start();
           Serial.printf("trigMeasurement: %d\t%d\t%d\t%d\n", 
             newPoint.timestamp, newPoint.coldTemperature, newPoint.hotTemperature, newPoint.power);
         }
