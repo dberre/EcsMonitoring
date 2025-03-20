@@ -16,7 +16,7 @@ class ApplicationSettings {
     public:
     ApplicationSettings();
 
-    enum StorageMode: int { full = 1, delta };
+    enum StorageMode: int { full = 1, incremental_threshold, incremental_delta };
 
     String getJSON();
     bool parseJSON(char *jsonTxt);

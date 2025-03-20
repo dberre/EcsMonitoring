@@ -6,7 +6,7 @@
 #include "DataPoint.h"
 
 struct RequestQueueMsg {
-    enum MsgTypes: int { undef, trigMeasurement, getMeasurement, getVoltage, getHistory, clearHistory, getHistoryDepth };
+    enum MsgTypes: int { undef, trigMeasurement, getMeasurement, getVoltage, getHistory, clearHistory, getHistoryDepth, gotoLightSleep };
 
     RequestQueueMsg();
     RequestQueueMsg(MsgTypes type);
@@ -39,6 +39,7 @@ struct ResponseQueueMsg {
 #define GetHistoryRequest(count, offset) RequestQueueMsg(RequestQueueMsg::MsgTypes::getHistory, (count), (offset))
 #define GetHistoryDepth RequestQueueMsg(RequestQueueMsg::MsgTypes::getHistoryDepth)
 #define ClearHistoryRequest RequestQueueMsg(RequestQueueMsg::MsgTypes::clearHistory)
+#define GotoLightSleepRequest RequestQueueMsg(RequestQueueMsg::MsgTypes::gotoLightSleep)
 
 extern QueueHandle_t requestQueue;
 extern QueueHandle_t responseQueue;

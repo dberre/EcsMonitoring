@@ -2,16 +2,26 @@
 
 #include "AcquisitionTimer.h"
 
-AcquisitionTimer::AcquisitionTimer(esp_timer_cb_t callback) {
+AcquisitionTimer::AcquisitionTimer(esp_timer_cb_t callback, uint64_t duration) {
   _timer = NULL;
   _timerConfig.arg = NULL;
   _timerConfig.callback = callback;
   _timerConfig.dispatch_method = ESP_TIMER_TASK;
   _timerConfig.name = "AcquisitionTimer";
+  duration_ = duration  * 1000000ULL;
 }
 
-void AcquisitionTimer::start(uint64_t duration) {
+void AcquisitionTimer::setDuration(uint64_t duration) {
   duration_ = duration  * 1000000ULL;
+  if (_timer != NULL) {
+    if (esp_timer_is_active(_timer)) {
+      this->stop();
+      this->start();
+    }
+  }
+}
+
+void AcquisitionTimer::start() {
   if (_timer == NULL) {
     esp_timer_create(&_timerConfig, &_timer);
   }

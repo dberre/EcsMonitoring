@@ -5,8 +5,9 @@
 
 class AcquisitionTimer {
     public:
-    AcquisitionTimer(esp_timer_cb_t callback);
-    void start(uint64_t duration);
+    AcquisitionTimer(esp_timer_cb_t callback, uint64_t duration);
+    void setDuration(uint64_t duration);
+    void start();
     void stop();
     void suspend();
     void resume();

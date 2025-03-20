@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
-#include "FS.h"
-#include "LittleFS.h"
+#include <FS.h>
+#include <LittleFS.h>
 
 #include "MonitoringWebServer.h"
 #include "utils.h"
@@ -63,8 +63,12 @@ MonitoringWebServer::MonitoringWebServer() {
 
     server->on("/gotoSleep", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /gotoSleep");
-        gotoSleep();
-        request->send(200);
+        RequestQueueMsg req = GotoLightSleepRequest;
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
+            request->send(200);
+        } else {
+            request->send(500);
+        }
     });
 
     server->on("/downloadHistoryRaw", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -285,7 +289,8 @@ MonitoringWebServer::MonitoringWebServer() {
         if (ApplicationSettings::instance()->parseJSON(jsonTxt)) {
             free(jsonTxt);
             acquisitionTimer->stop();
-            acquisitionTimer->start(ApplicationSettings::instance()->getSamplingPeriod());
+            acquisitionTimer->setDuration(ApplicationSettings::instance()->getSamplingPeriod());
+            acquisitionTimer->start();
             request->send(200);
         } else {
             request->send(400);

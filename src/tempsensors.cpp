@@ -30,8 +30,7 @@ static float getTemperature(DS18B20& sensor) {
   return sensor.getTempC();
 }
 
-bool setupTemperatureSensors(void)
-{
+bool setupTemperatureSensors(void) {
     if (!setupTemperatureSensor(coldSensor)) { return false; }
     if (!setupTemperatureSensor(hotSensor)) { return false; }
     return true;

@@ -13,14 +13,28 @@ WatchdogTimer::WatchdogTimer(esp_timer_cb_t callback, uint64_t duration) {
     esp_timer_start_once(_timer, duration_);
 }
 
+void WatchdogTimer::suspend() {
+  if (_timer) {
+    if(esp_timer_is_active(_timer)) {
+      esp_timer_stop(_timer);
+    }
+  }
+}  
+
 void WatchdogTimer::restart() {
-    esp_timer_stop(_timer);
+  if (_timer != NULL) {
+    if(esp_timer_is_active(_timer)) {
+      esp_timer_stop(_timer);
+    }
     esp_timer_start_once(_timer, duration_);
+  }
 }
 
 void WatchdogTimer::stop() {
   if (_timer != NULL) {
-    esp_timer_stop(_timer);
+    if(esp_timer_is_active(_timer)) {
+      esp_timer_stop(_timer);
+    }
     esp_timer_delete(_timer);
     _timer = NULL;
   }
