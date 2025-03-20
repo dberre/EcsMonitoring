@@ -153,7 +153,7 @@ float Ads1115Board::readRmsVoltage(uint channel, uint duration) {
 
     if (millis() > tend) {
       rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(((double)(sumSquareAdc / numberOfSamples)) - pow((double)sumAdc / numberOfSamples, 2)));
-      Serial.printf("%d;%d;%ld;%f\n", numberOfSamples, sumAdc, sumSquareAdc, rmsVoltage);
+      // Serial.printf("%d;%d;%ld;%f\n", numberOfSamples, sumAdc, sumSquareAdc, rmsVoltage);
       break;
     }
   }

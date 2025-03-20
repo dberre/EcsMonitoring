@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <link rel="stylesheet" type="text/css" href="w3.css">
+        
+        <script>
+            window.onload = () => {
+
+                xhttp = new XMLHttpRequest();
+                xhttp.open("GET", `historyDepth`, false);
+                xhttp.send();
+
+                if (xhttp.readyState == 4 && xhttp.status == 200) {
+                    const obj = JSON.parse(xhttp.responseText)
+                    let recordsCount = Number(obj.historyDepth);
+
+                    xhttp.open("GET", `history?count=${recordsCount}&offset=0`, false);
+                    xhttp.send();
+
+                    if (xhttp.readyState == 4 && xhttp.status == 200) {
+                        // Create a Blob with the CSV data and type
+                        const blob = new Blob([["Date,Sonde1 (°C),Sonde2 (°C),Chauffe", xhttp.responseText].join('\n')], { type: 'text/csv' });
+
+                        // Create a URL for the Blob
+                        const url = URL.createObjectURL(blob);
+
+                        console.log(`URL:${url}`);
+
+                        // Create an anchor tag for downloading
+                        const a = document.getElementById("fullHistoryDownload");
+
+                        // Set the URL and download attribute of the anchor tag
+                        a.href = url;
+                        a.download = 'fullHistory.csv';
+                    }
+                }
+            }
+        </script>
+    </head>
+
+    <body">
+        <div class="w3-card w3-blue w3-padding-small">
+            <h1>Download history</h1>
+        </div>
+        <div>
+            <a id="fullHistoryDownload" href="">Full</a>
+        </div>
+    </body>
+
+</html>

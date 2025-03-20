@@ -32,5 +32,7 @@ void setupQueues() {
 
 void deleteQueues() {
     vQueueDelete(requestQueue);
+    requestQueue = NULL;
     vQueueDelete(responseQueue);
+    responseQueue = NULL;
 }

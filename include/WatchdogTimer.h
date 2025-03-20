@@ -6,6 +6,7 @@
 class WatchdogTimer {
     public:
     WatchdogTimer(esp_timer_cb_t callback, uint64_t duration);
+    void suspend();
     void restart();
     void stop();
 
