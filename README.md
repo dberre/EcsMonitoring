@@ -75,3 +75,8 @@ curl -G -i -d 'timeEpoch=1921' http://192.168.4.22/setTime
 curl -G -i http://192.168.4.22/getInstantValues
 
 curl -G -i -d 'count=10&offset=10'  http://192.168.4.22/history
+
+
+a investiguer
+[466348][D][AsyncTCP.cpp:187] _get_async_event(): coalescing polls, network congestion or async callbacks might be too slow!
+Dans la fenetre du monitor quand le client sollicite valeurs instantanées

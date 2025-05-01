@@ -38,29 +38,35 @@ float Ads1115Board::readVoltage(uint channel, uint duration) {
   }
 
   // range volts à définir (TODO)
-  _board->setGain(1);
+  _board->setGain(0);
 
   // configure in single shot mode
   _board->setMode(1);
 
-  int32_t sumAdc = 0;
-  uint32_t numberOfSamples = 0;
-  unsigned long tend = millis() + duration;
-
-  for(;;) {
-    _board->requestADC(channel);
-    int adc = _board->getValue();
-    sumAdc += adc;
-    numberOfSamples++;
-    if (millis() > tend) break;
+  // clear any pending conversion (due to switch between cont and single modes)
+  if (_board->isBusy()) {
+    _board->readADC();
   }
 
-  float rmsVoltage = (_board->getMaxVoltage() / 32767) * ((double)sumAdc / numberOfSamples);
-  Serial.printf("%d ADC; %.4f V\n", sumAdc / numberOfSamples, rmsVoltage);
+  int32_t sumAdc = 0;
+  uint32_t numberOfSamples = 0;
+  unsigned long t_end = millis() + duration;
+
+  for(;;) {
+    int adc = _board->readADC(channel);
+    if(_board->getError() == ADS1X15_OK) {
+      sumAdc += adc;
+      numberOfSamples++;
+    }
+    if (millis() > t_end) break;
+  }
+
+  float voltage = _board->toVoltage((double)sumAdc / numberOfSamples);
+  // Serial.printf("%d ADC; %d samples; %.4f V\n", sumAdc, numberOfSamples, voltage);
 
   _board->reset();
 
-  return rmsVoltage;
+  return voltage;
 }
 
 float Ads1115Board::readRmsVoltageAlt(uint channel, uint duration) {
@@ -93,7 +99,7 @@ float Ads1115Board::readRmsVoltageAlt(uint channel, uint duration) {
   double part2 = pow((double)sumAdc / numberOfSamples, 2);
   // float rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(((double)(sumSquareAdc / numberOfSamples)) - pow((double)sumAdc / numberOfSamples, 2)));
   float rmsVoltage = (_board->getMaxVoltage() / 32767) * sqrt(fabs(part1 - part2));
-  Serial.printf("%.0f ADC; %.0f ADC2; %.4f V\n", part1, part2, rmsVoltage);
+  //Serial.printf("%.0f ADC; %.0f ADC2; %.4f V\n", part1, part2, rmsVoltage);
 
   _board->reset();
 

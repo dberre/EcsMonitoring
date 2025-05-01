@@ -14,7 +14,7 @@ void setup() {
   setupUtils();
 
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-  Serial.printf("esp_sleep_wakeup_cause_t %d\n", wakeup_reason);
+  Serial.printf("setup - wakeup cause: %d\n", wakeup_reason);
   switch (wakeup_reason)
   {
     case ESP_SLEEP_WAKEUP_TIMER:
@@ -54,6 +54,15 @@ void loop() {
             ResponseQueueMsg response;
             response.msgType = ResponseQueueMsg::MsgType::voltage;
             response.data.voltage = vrms;
+            xQueueSend(responseQueue, &response, 0);
+          }
+          break;
+        case RequestQueueMsg::MsgTypes::getBatteryVoltage: {
+            // the is a resistor divider /2 on the board
+            float vbatt = 2.0 * Ads1115Board::getInstance()->readVoltage(2, 100);
+            ResponseQueueMsg response;
+            response.msgType = ResponseQueueMsg::MsgType::voltage;
+            response.data.voltage = vbatt;
             xQueueSend(responseQueue, &response, 0);
           }
           break;

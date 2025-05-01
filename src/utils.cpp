@@ -34,7 +34,8 @@ void makeMeasurementCallback(void *args) {
 }
 
 void watchdogCallback(void *args) {
-  gotoLightSleep();
+  RequestQueueMsg req = GotoLightSleepRequest;
+  xQueueSend(requestQueue, &req, 0);
 }
 
 void listRootDirectory() {
@@ -77,8 +78,8 @@ void setupForUserWakeup() {
   acquisitionTimer = new AcquisitionTimer(&makeMeasurementCallback, ApplicationSettings::instance()->getSamplingPeriod());
   acquisitionTimer->start();
 
-  // watchdog to go to sleep mode after 5 minutes of inactivity
-  watchdogTimer = new WatchdogTimer(&watchdogCallback, 300000000ULL);
+  // watchdog to go to sleep mode after 3 minutes of inactivity
+  watchdogTimer = new WatchdogTimer(&watchdogCallback, 180000000ULL);
   // watchdogTimer = new WatchdogTimer(&watchdogCallback, 36000000000ULL);  // FIXME for test only
   monitoringWebServer.start();
 }
@@ -182,7 +183,7 @@ void gotoLightSleep() {
     
     // the execution pauses here, and will restart from here at wakeup
     esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
-    Serial.printf("wakeup cause:%d\n", wakeupCause);
+    Serial.printf("light sleep - wakeup cause: %d\n", wakeupCause);
     if (wakeupCause != ESP_SLEEP_WAKEUP_TIMER) {
       break;
     }
@@ -201,6 +202,7 @@ void gotoLightSleep() {
 
 void gotoDeepSleep() {
   monitoringWebServer.stop();
+
   if (acquisitionTimer != NULL) {
     acquisitionTimer->stop();
     delete(acquisitionTimer);
