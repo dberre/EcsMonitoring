@@ -15,7 +15,8 @@ void stopAcquisitionTimer();
 DataPoint makeMeasurement();
 float getPowerConsumption();
 void saveMeasurement(DataPoint& point);
-void gotoSleep();
+void gotoLightSleep();
+void gotoDeepSleep();
 void setTime();
 time_t computeNextTick();
 
