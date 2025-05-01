@@ -1,7 +1,7 @@
 
 function gotoSleepButton() {
     var xhttp = new XMLHttpRequest();
-    xhttp.open("GET", "gotoSleep", true);
+    xhttp.open("GET", "gotoLightSleep", true);
     xhttp.send();
 }
 

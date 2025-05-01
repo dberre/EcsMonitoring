@@ -61,14 +61,21 @@ MonitoringWebServer::MonitoringWebServer() {
         request->send(LittleFS, "/jquery-3.6.3.min.js", "text/javascript");
     });
 
-    server->on("/gotoSleep", HTTP_GET, [](AsyncWebServerRequest *request) {
-        Serial.println("server: /gotoSleep");
+    server->on("/gotoLightSleep", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /gotoLightSleep");
         RequestQueueMsg req = GotoLightSleepRequest;
         if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
             request->send(200);
         } else {
             request->send(500);
         }
+    });
+
+    server->on("/gotoDeepSleep", HTTP_GET, [](AsyncWebServerRequest *request) {
+        Serial.println("server: /gotoDeepSleep");
+        request->send(200);
+        // the answer is sent before as deep sleep stops the server
+        gotoDeepSleep();
     });
 
     server->on("/downloadHistoryRaw", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -241,6 +248,36 @@ MonitoringWebServer::MonitoringWebServer() {
         }
     });
 
+    server->on("/getBatteryVoltage",HTTP_GET, [](AsyncWebServerRequest *request) {
+        // example: curl http://192.168.4.22/getBatteryVoltage
+        Serial.println("server: /getBatteryVoltage");
+        watchdogTimer->restart();
+
+        RequestQueueMsg req = GetBatteryVoltageRequest;
+        if (xQueueSend(requestQueue, &req, 0) == pdTRUE) {
+            ResponseQueueMsg response;
+            uint32_t t0 = millis();
+            bool received = false;
+            while (!received) {
+                if ((millis() - t0) > 1500) {
+                    // time out, no response received
+                    request->send(500);
+                    break;
+                } else if (xQueueReceive(responseQueue, &response, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+                    if (response.msgType == ResponseQueueMsg::MsgType::voltage) {
+                        char jsonStr[40];
+                        sprintf(jsonStr, "{\"voltage\":%.06f}", response.data.voltage);
+                        request->send(200, "application/json", String(jsonStr));
+                        received = true;
+                    }
+                }
+            }
+        } else {
+            // the queue is full, can't send the request
+            request->send(500);
+        }
+    });
+    
     server->on("/setTime", HTTP_GET, [](AsyncWebServerRequest *request) {
         Serial.println("server: /setTime");
 
