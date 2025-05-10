@@ -112,7 +112,7 @@ int ApplicationSettings::getTemperatureThreshold() {
 void ApplicationSettings::setTemperatureThreshold(int temperature) {
     temperatureThreshold_ = temperature;
     settings_.begin("global", false);
-    settings_.putBool(TEMPERATURE_THRESHOLD, temperature);
+    settings_.putInt(TEMPERATURE_THRESHOLD, temperature);
     settings_.end();
 }
 
