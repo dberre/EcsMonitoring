@@ -17,9 +17,11 @@ function setTimeButton() {
 }
 
 function clearHistoryButton() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("GET", "clearHistory", true);
-    xhttp.send();    
+    if (confirm("Press OK to delete the full history.\nPress Cancel otherwise.") == true) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "clearHistory", true);
+        xhttp.send();
+    }
 }
 
 function downloadFile(urlToSend) {

@@ -45,7 +45,7 @@ float Ads1115Board::readVoltage(uint channel, uint duration) {
 
   // clear any pending conversion (due to switch between cont and single modes)
   if (_board->isBusy()) {
-    _board->readADC();
+    _board->readADC(channel);
   }
 
   int32_t sumAdc = 0;
